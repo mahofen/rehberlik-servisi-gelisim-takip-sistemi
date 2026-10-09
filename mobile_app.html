@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Rehberlik Servisi Gelişim Takip Sistemi - Mobil Uygulama</title>
   
-  <!-- PWA Meta -->
+  <!-- PWA Meta & Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gelişim Takip">
   <meta name="theme-color" content="#0284c7">
 
   <!-- Tailwind CSS -->
@@ -2779,7 +2782,159 @@
       }
       // Supabase bulut senkronizasyonu başlat
       syncInitialDataFromSupabase();
+
+      // PWA Ana Ekrana Ekleme Motorunu Başlat
+      initPwaInstallFeatures();
     });
+
+    /* =========================================================================
+       PWA ANA EKRANA EKLE (ADD TO HOME SCREEN) MOTORU
+       ========================================================================= */
+    let deferredPwaPrompt = null;
+
+    function initPwaInstallFeatures() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+          console.log('[PWA SW] Kayıt:', err);
+        });
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPwaPrompt = e;
+        setTimeout(() => {
+          showPwaInstallBanner();
+        }, 1200);
+      });
+
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA] Uygulama ana ekrana eklendi!');
+        dismissPwaBanner();
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        }
+      });
+
+      // iOS Safari Tespiti
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (isIos && !isStandalone) {
+        const iosBannerDismissed = sessionStorage.getItem("pwa_ios_dismissed_mobile");
+        if (!iosBannerDismissed) {
+          setTimeout(() => {
+            showPwaInstallBanner(true);
+          }, 1800);
+        }
+      }
+    }
+
+    function showPwaInstallBanner(isIosGuide = false) {
+      const banner = document.getElementById("pwaInstallBanner");
+      if (!banner) return;
+      if (isIosGuide) {
+        const titleEl = document.getElementById("pwaBannerTitle");
+        const descEl = document.getElementById("pwaBannerDesc");
+        const actionBtn = document.getElementById("pwaBannerInstallBtn");
+        if (titleEl) titleEl.textContent = "Ana Ekrana Ekle (iOS)";
+        if (descEl) descEl.textContent = "Paylaş [⎋] butonuna dokunup 'Ana Ekrana Ekle'yi seçin.";
+        if (actionBtn) {
+          actionBtn.textContent = "Nasıl? 💡";
+          actionBtn.onclick = () => openIosPwaGuideModal();
+        }
+      }
+      banner.classList.remove("translate-y-32", "opacity-0", "pointer-events-none");
+      banner.classList.add("translate-y-0", "opacity-100", "pointer-events-auto");
+    }
+
+    function dismissPwaBanner() {
+      const banner = document.getElementById("pwaInstallBanner");
+      if (banner) {
+        banner.classList.add("translate-y-32", "opacity-0", "pointer-events-none");
+        banner.classList.remove("translate-y-0", "opacity-100", "pointer-events-auto");
+      }
+      sessionStorage.setItem("pwa_ios_dismissed_mobile", "true");
+    }
+
+    async function triggerPwaInstallPrompt() {
+      if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        const { outcome } = await deferredPwaPrompt.userChoice;
+        if (outcome === 'accepted') {
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+          }
+        }
+        deferredPwaPrompt = null;
+        dismissPwaBanner();
+      } else {
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIos) {
+          openIosPwaGuideModal();
+        } else {
+          alert("📲 Uygulama yükleme: Tarayıcınızın menüsünden (üç nokta) 'Ana Ekrana Ekle' veya 'Uygulamayı Yükle' seçeneğini kullanabilirsiniz.");
+        }
+      }
+    }
+
+    function openIosPwaGuideModal() {
+      const modal = document.getElementById("iosPwaGuideModal");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function closeIosPwaGuideModal() {
+      const modal = document.getElementById("iosPwaGuideModal");
+      if (modal) modal.classList.add("hidden");
+    }
   </script>
+
+  <!-- Mobil Ana Ekrana Ekleme Bildirim Çubuğu (PWA Install Toast / Banner) -->
+  <div id="pwaInstallBanner" class="fixed bottom-16 sm:bottom-4 left-4 right-4 max-w-sm mx-auto bg-slate-900/95 border border-sky-400/40 backdrop-blur-xl text-white p-3.5 rounded-3xl shadow-2xl z-50 transform translate-y-32 opacity-0 transition-all duration-500 flex items-center justify-between gap-3 pointer-events-none ring-1 ring-sky-500/20">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white flex items-center justify-center text-base shrink-0 shadow-md">
+        <i class="fa-solid fa-mobile-screen-button"></i>
+      </div>
+      <div class="min-w-0">
+        <h5 id="pwaBannerTitle" class="font-fun text-xs font-bold text-white truncate">Uygulamayı Ana Ekrana Ekle</h5>
+        <p id="pwaBannerDesc" class="text-[10px] text-slate-300 truncate">Hızlı giriş ve tam ekran mobil konforu</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button id="pwaBannerInstallBtn" onclick="triggerPwaInstallPrompt()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 text-slate-950 font-fun font-bold text-xs shadow-sm transition-all tap-bounce cursor-pointer">
+        Ekle 📲
+      </button>
+      <button onclick="dismissPwaBanner()" class="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center text-xs transition-all cursor-pointer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- iOS Safari Ana Ekrana Ekleme Rehber Modalı -->
+  <div id="iosPwaGuideModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl space-y-3 border border-slate-100 text-slate-800 text-center relative">
+      <button onclick="closeIosPwaGuideModal()" class="absolute right-3.5 top-3.5 w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mx-auto shadow-inner">
+        <i class="fa-brands fa-apple"></i>
+      </div>
+      <div>
+        <h3 class="font-fun text-sm font-bold text-slate-900">iPhone / iPad Ana Ekrana Ekleme</h3>
+        <p class="text-[11px] text-slate-500 mt-0.5">Uygulama gibi tam ekran kullanmak için 2 kolay adım:</p>
+      </div>
+      <div class="space-y-2 text-left text-xs bg-slate-50 p-3 rounded-2xl border border-slate-200">
+        <div class="flex items-start gap-2">
+          <span class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">1</span>
+          <span class="text-[11px]">Safari'nin alttaki <strong>Paylaş</strong> simgesine (<i class="fa-solid fa-arrow-up-from-bracket text-blue-600"></i>) dokunun.</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">2</span>
+          <span class="text-[11px]">Listeden <strong>"Ana Ekrana Ekle"</strong> (<i class="fa-regular fa-square-plus text-blue-600"></i>) seçeneğine basın.</span>
+        </div>
+      </div>
+      <button onclick="closeIosPwaGuideModal()" class="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-fun font-bold text-xs shadow-md transition-all cursor-pointer">
+        Anladım 👍
+      </button>
+    </div>
+  </div>
 </body>
 </html>
