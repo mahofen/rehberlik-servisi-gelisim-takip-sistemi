@@ -224,7 +224,7 @@
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
                 <span>👤 Öğrenci Adı (Kullanıcı Adı):</span>
-                <span class="text-[10px] text-slate-400">Aşağıdaki listeden de seçebilirsiniz</span>
+                <span class="text-[10px] text-slate-400">Ad ve soyadınızı giriniz</span>
               </label>
               <div class="relative">
                 <i class="fa-solid fa-user-graduate absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
@@ -252,33 +252,6 @@
               <span>Giriş Yap ve Takip Sayfamı Aç 🚀</span>
             </button>
           </form>
-
-          <!-- Hızlı Seçim Listesi (Kayıtlı Kartlar) -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
-              <span>💡 Hızlı Öğrenci Seçimi:</span>
-              <span class="text-[10px] text-slate-400">Profilinize tıklayarak kullanıcı adını otomatik yazdırın</span>
-            </div>
-            <div id="registeredCardsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-52 overflow-y-auto pr-1">
-              <!-- JS ile doldurulur -->
-            </div>
-          </div>
-
-          <!-- Boş Durum (Eğer hiç kayıt yoksa) -->
-          <div id="noRegisteredStudentsNotice" class="hidden text-center p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 space-y-2.5">
-            <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg mx-auto">
-              <i class="fa-solid fa-user-slash"></i>
-            </div>
-            <div class="space-y-1">
-              <h4 class="font-fun text-xs font-bold text-slate-800">Henüz Kayıtlı Öğrenci Bulunmuyor</h4>
-              <p class="text-[11px] text-slate-500 max-w-sm mx-auto">
-                İlk öğrencimizi kaydetmek için lütfen <strong>"1. Yeni Öğrenci Kaydı"</strong> sekmesine geçin.
-              </p>
-            </div>
-            <button onclick="switchPortalTab('register')" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-fun font-bold text-xs shadow-sm hover:bg-blue-700 cursor-pointer">
-              Şimdi Öğrenci Kaydet 📝
-            </button>
-          </div>
         </div>
 
       </div>
@@ -424,7 +397,8 @@
         tabBtnReg.className = "px-4 py-2 rounded-xl text-xs font-fun font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200";
         contentLog.classList.remove("hidden");
         contentReg.classList.add("hidden");
-        renderRegisteredCards();
+        updateRegisteredStudentsUI();
+        document.getElementById("loginStudentUsername")?.focus();
       }
     }
 
@@ -474,64 +448,15 @@
       });
     }
 
-    function quickSelectStudent(name, username) {
-      const userInput = document.getElementById("loginStudentUsername");
-      const passInput = document.getElementById("loginStudentPassword");
-      const alertBox = document.getElementById("studentLoginAlert");
-      if (alertBox) alertBox.classList.add("hidden");
-
-      if (userInput) {
-        userInput.value = username || name;
-      }
-      if (passInput) {
-        passInput.focus();
-        passInput.select();
-      }
+    function updateRegisteredStudentsUI() {
+      const students = getRegisteredStudents();
+      const countEl = document.getElementById("tabRegisteredCount");
+      if (countEl) countEl.textContent = students.length;
+      populateStudentDatalist(students);
     }
 
     function renderRegisteredCards() {
-      const container = document.getElementById("registeredCardsList");
-      const notice = document.getElementById("noRegisteredStudentsNotice");
-      const countEl = document.getElementById("tabRegisteredCount");
-      if (!container) return;
-
-      const students = getRegisteredStudents();
-      if (countEl) countEl.textContent = students.length;
-      populateStudentDatalist(students);
-
-      if (students.length === 0) {
-        container.innerHTML = "";
-        notice?.classList.remove("hidden");
-        return;
-      }
-
-      notice?.classList.add("hidden");
-      container.innerHTML = "";
-
-      students.forEach(st => {
-        const card = document.createElement("div");
-        card.className = "p-2.5 rounded-2xl bg-white hover:bg-blue-50/80 border border-slate-200 hover:border-blue-300 flex items-center justify-between gap-2.5 transition-all cursor-pointer group shadow-xs";
-        card.onclick = () => {
-          quickSelectStudent(st.name, st.username);
-        };
-        card.innerHTML = `
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span class="w-8 h-8 rounded-xl bg-blue-50 border border-slate-200 group-hover:border-blue-300 flex items-center justify-center text-sm shrink-0 shadow-xs">${st.avatar || '🌟'}</span>
-            <div class="truncate">
-              <div class="text-xs font-fun font-bold text-slate-900 group-hover:text-blue-700 truncate">${st.name}</div>
-              <div class="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                <span class="px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 font-bold">${st.sube || '7. Sınıf'}</span>
-                <span class="text-slate-400 text-[10px]">K.Adı: ${st.username || st.name}</span>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="text-[10px] px-2.5 py-1 rounded-xl bg-slate-100 group-hover:bg-blue-600 group-hover:text-white text-slate-700 font-fun font-bold shadow-xs transition-colors shrink-0 flex items-center gap-1">
-            <span>Seç</span>
-            <i class="fa-solid fa-arrow-right text-[9px]"></i>
-          </button>
-        `;
-        container.appendChild(card);
-      });
+      updateRegisteredStudentsUI();
     }
 
     function handleStudentLoginSubmit() {
@@ -672,9 +597,7 @@
 
       // 1. Yerel verilerle arayüzü anında doldur
       let students = getRegisteredStudents();
-      const countEl = document.getElementById("tabRegisteredCount");
-      if (countEl) countEl.textContent = students.length;
-      populateStudentDatalist(students);
+      updateRegisteredStudentsUI();
 
       // 2. Merkezi Havuz: Buluttan öğrencileri senkronize et
       if (typeof syncCentralStudentsWithCloud === "function") {
@@ -682,11 +605,7 @@
           const syncedList = await syncCentralStudentsWithCloud(students);
           if (Array.isArray(syncedList) && syncedList.length > 0) {
             students = syncedList;
-            if (countEl) countEl.textContent = students.length;
-            populateStudentDatalist(students);
-            if (currentPortalTab === 'login') {
-              renderRegisteredCards();
-            }
+            updateRegisteredStudentsUI();
           }
         } catch (e) {
           console.warn("[Central Sync] Başlangıç bulut senkron hatası:", e);
