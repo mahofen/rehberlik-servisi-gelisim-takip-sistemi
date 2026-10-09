@@ -31,64 +31,90 @@
     .tap-bounce:active { transform: scale(0.97); }
   </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+<body class="relative bg-slate-950 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white overflow-x-hidden">
+
+  <!-- Arka Plan Modern Ambient Glow & Mesh Işıkları -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/20 to-sky-400/10 blur-[130px] rounded-full"></div>
+    <div class="absolute bottom-10 right-10 w-[600px] h-[400px] bg-indigo-900/20 blur-[140px] rounded-full"></div>
+    <div class="absolute top-1/3 -left-20 w-[500px] h-[400px] bg-blue-600/10 blur-[140px] rounded-full"></div>
+  </div>
 
   <!-- ================= HEADER ================= -->
-  <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-sky-400 flex items-center justify-center text-white text-2xl shadow-lg shadow-blue-500/30 shrink-0">
-        <i class="fa-solid fa-graduation-cap"></i>
-      </div>
-      <div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="font-fun text-base sm:text-xl font-bold text-white tracking-wide">
-            Rehberlik Servisi Gelişim Takip Sistemi
-          </span>
-          <span class="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-blue-500/20 text-sky-300 text-[10px] font-bold border border-blue-400/30">
-            2026-2027
-          </span>
+  <header class="w-full border-b border-white/10 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white text-2xl shadow-lg shadow-blue-500/30 shrink-0 border border-white/20">
+          <i class="fa-solid fa-graduation-cap"></i>
         </div>
-        <p class="text-xs sm:text-sm text-sky-200/90 font-medium flex items-center gap-1.5 mt-0.5">
-          <i class="fa-solid fa-school text-amber-300 text-xs"></i>
-          <span>Şehit Gökhan Uzun İmam Hatip Ortaokulu</span>
-        </p>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-fun text-base sm:text-xl font-bold text-white tracking-wide">
+              Rehberlik Servisi Gelişim Takip Sistemi
+            </span>
+            <span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/15 text-sky-300 text-[10px] font-bold border border-blue-400/30 shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+              2026-2027
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-sky-200/90 font-medium flex items-center gap-1.5 mt-0.5">
+            <i class="fa-solid fa-school text-amber-300 text-xs"></i>
+            <span>Şehit Gökhan Uzun İmam Hatip Ortaokulu</span>
+          </p>
+        </div>
       </div>
-    </div>
 
-    <!-- Sağ Üst Hızlı Butonlar -->
-    <div class="flex items-center gap-2">
-      <a href="admin.html" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5 transition-all shadow-sm">
-        <i class="fa-solid fa-shield-halved text-amber-300"></i>
-        <span>Yönetici Girişi</span>
-      </a>
-      <a href="mobile_app.html" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all shadow-sm" title="Mobil Uygulama Portalı">
-        <i class="fa-solid fa-mobile-screen-button text-sm"></i>
-      </a>
+      <!-- Sağ Üst: Yönetici Girişi (Mobil Buton Kaldırıldı) -->
+      <div class="flex items-center gap-2">
+        <a href="admin.html" class="px-4 py-2 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 hover:text-amber-200 text-xs font-bold border border-amber-400/30 flex items-center gap-2 transition-all shadow-sm tap-bounce">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i>
+          <span>Yönetici Girişi</span>
+        </a>
+      </div>
     </div>
   </header>
 
   <!-- ================= ANA İÇERİK ================= -->
-  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 flex flex-col justify-center">
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex-1 flex flex-col justify-center">
     
-    <!-- Karşılama Başlığı & Motto -->
-    <div class="text-center max-w-4xl mx-auto space-y-3 mb-8">
-      <div class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 px-4 py-1.5 rounded-full text-xs font-bold text-sky-300 border border-sky-400/30 backdrop-blur-md">
-        <i class="fa-solid fa-school text-amber-400"></i>
-        <span>Şehit Gökhan Uzun İmam Hatip Ortaokulu</span>
+    <!-- Karşılama Başlığı & Modern Hero Alanı -->
+    <div class="text-center max-w-4xl mx-auto space-y-4 mb-8 sm:mb-10">
+      <div class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/15 via-indigo-500/15 to-purple-500/15 px-4 py-1.5 rounded-full text-xs font-bold text-sky-300 border border-sky-400/30 backdrop-blur-md shadow-sm">
+        <i class="fa-solid fa-star text-amber-300"></i>
+        <span>T.C. Millî Eğitim Bakanlığı • LGS 2027 Rehberlik ve Takip Portalı</span>
       </div>
       <h1 class="font-fun text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
         <span class="bg-gradient-to-r from-sky-400 via-blue-400 to-amber-300 bg-clip-text text-transparent">Rehberlik Servisi Gelişim Takip Sistemi</span>
       </h1>
-      <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl mx-auto">
-        Şehit Gökhan Uzun İmam Hatip Ortaokulu Rehberlik Servisi koordinasyonunda; 7. sınıf öğrencilerimizin haftalık konu kazanımları, günlük soru çözümleri, 90 soruluk LGS denemeleri ve yapay zeka dijital koçluk analizleri adım adım takip edilmektedir.
+      <p class="text-xs sm:text-base text-slate-300 leading-relaxed max-w-3xl mx-auto font-normal">
+        Şehit Gökhan Uzun İmam Hatip Ortaokulu Rehberlik Servisi koordinasyonunda; 7. sınıf öğrencilerimizin haftalık konu kazanımları, günlük soru analitiği, 90 soruluk denemeleri ve yapay zekâ dijital koçluk değerlendirmeleri adım adım takip edilmektedir.
       </p>
+      
+      <!-- Hızlı Güven & Nitelik Rozetleri -->
+      <div class="flex flex-wrap items-center justify-center gap-2 pt-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-medium backdrop-blur-sm">
+          <i class="fa-solid fa-calendar-check text-blue-400"></i> 40 Haftalık MEB Müfredatı
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-medium backdrop-blur-sm">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i> Günlük 6 Ders Soru Takibi
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-medium backdrop-blur-sm">
+          <i class="fa-solid fa-clipboard-check text-purple-400"></i> 90 Soruluk LGS Denemeleri
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-medium backdrop-blur-sm">
+          <i class="fa-solid fa-robot text-amber-300"></i> Yapay Zekâ Dijital Koç
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-medium backdrop-blur-sm">
+          <i class="fa-solid fa-shield-halved text-sky-400"></i> Anlık Bulut Senkronizasyon
+        </span>
+      </div>
     </div>
 
     <!-- Giriş ve Kayıt Bölümü Izgarası -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
       <!-- SOL: Öğrenci Kayıt ve Giriş Paneli (7 Sütun) -->
-      <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100/90 space-y-6">
+      <div class="lg:col-span-7 bg-white/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/40 ring-1 ring-slate-900/5 space-y-6">
         
         <!-- Sekme Başlıkları: Yeni Öğrenci Kaydı / Kayıtlı Öğrenci Girişi -->
         <div class="flex items-center justify-between border-b pb-3">
@@ -255,74 +281,139 @@
 
       </div>
 
-      <!-- SAĞ: Portallar & Özellik Bilgileri (5 Sütun) -->
-      <div class="lg:col-span-5 space-y-4">
+      <!-- SAĞ: Yönetici Girişi & Sistemde Aktif Olan Özellikler (5 Sütun) -->
+      <div class="lg:col-span-5 space-y-5">
         
-        <!-- Yönetici Portalı Hızlı Kartı -->
-        <div class="bg-gradient-to-br from-indigo-900/90 to-slate-900/90 backdrop-blur-md rounded-3xl p-6 border border-indigo-500/30 text-white space-y-3 shadow-xl">
-          <div class="flex items-center justify-between">
-            <div class="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-lg border border-amber-400/30">
-              <i class="fa-solid fa-shield-halved"></i>
+        <!-- Yönetici Portalı Hızlı Kartı (Açıklama Metni Kaldırıldı, Kompakt & Lüks Tasarım) -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-indigo-950/90 to-slate-900/95 backdrop-blur-xl rounded-3xl p-5 border border-amber-500/30 text-white shadow-xl group hover:border-amber-400/50 transition-all">
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-amber-400/15 text-amber-300 flex items-center justify-center text-xl border border-amber-400/30 shadow-inner shrink-0">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-fun text-base font-bold text-white tracking-wide">Yönetici Kontrol Merkezi</h3>
+                  <span class="text-[9px] uppercase font-bold text-amber-300 bg-amber-400/15 px-2 py-0.5 rounded-full border border-amber-400/30">
+                    Özel Yetkili
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-400 font-medium mt-0.5">Rehberlik Servisi & Yönetici Giriş Kapısı</p>
+              </div>
             </div>
-            <span class="text-[10px] uppercase font-bold text-amber-300 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
-              Şifreli Yönetici Paneli
+            <a href="admin.html" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-fun font-bold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5 shrink-0 tap-bounce">
+              <span>Panele Git</span>
+              <i class="fa-solid fa-arrow-right text-[11px]"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Sistemde Aktif Olan Özellikler (Modern & Prestijli Vitrin Kartı) -->
+        <div class="bg-slate-900/70 backdrop-blur-xl rounded-3xl p-6 border border-white/10 text-white space-y-4 shadow-xl">
+          <div class="flex items-center justify-between pb-3.5 border-b border-white/10">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-sky-400 flex items-center justify-center text-sm border border-blue-400/30">
+                <i class="fa-solid fa-sparkles"></i>
+              </div>
+              <div>
+                <h4 class="font-fun text-sm font-bold text-white tracking-wide">Sistemde Aktif Olan Özellikler</h4>
+                <p class="text-[11px] text-slate-400">Öğrenci başarısını artıran akıllı takip altyapısı</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Aktif & Güncel
             </span>
           </div>
-          <div>
-            <h3 class="font-fun text-lg font-bold text-white">Yönetici Kontrol Merkezi</h3>
-            <p class="text-xs text-indigo-200 mt-1 leading-relaxed">
-              Tüm kayıtlı öğrencilerin 40 haftalık karnelerini, yapay zeka başarı analizlerini, toplu sıfırlama sihirbazını ve Supabase bulut veritabanı ayarlarını bağımsız yönetici sayfasında yönetin.
-            </p>
-          </div>
-          <a href="admin.html" class="inline-flex items-center justify-between w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-fun font-bold text-xs shadow-md transition-all">
-            <span>Yönetici Sayfasına Git (admin / admin123)</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </a>
-        </div>
 
-        <!-- Mobil Uygulama Kartı -->
-        <div class="bg-gradient-to-br from-blue-900/60 to-indigo-900/60 backdrop-blur-md rounded-3xl p-5 border border-white/10 text-white flex items-center justify-between shadow-lg">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-sky-300 text-lg border border-white/10">
-              <i class="fa-solid fa-mobile-screen-button"></i>
+          <!-- Özellik Kartları / Öğeleri -->
+          <div class="space-y-2.5">
+            
+            <!-- 1: MEB 7. Sınıf Müfredatı -->
+            <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 transition-all">
+              <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center text-sm shrink-0 mt-0.5 border border-blue-400/20">
+                <i class="fa-solid fa-book-bookmark"></i>
+              </div>
+              <div class="text-xs">
+                <h5 class="font-bold text-slate-100 flex items-center gap-2">
+                  <span>MEB 7. Sınıf Kazanım Müfredatı</span>
+                  <span class="text-[10px] text-blue-400 font-normal">40 Hafta</span>
+                </h5>
+                <p class="text-slate-400 text-[11px] mt-0.5 leading-relaxed">Tüm ders konuları 40 haftalık akademik takvimle senkronize şekilde dinamik menüden seçilir.</p>
+              </div>
             </div>
-            <div>
-              <h4 class="font-fun text-sm font-bold text-white">Mobil Uygulama Portalı</h4>
-              <p class="text-[11px] text-sky-200">Telefon ve tabletler için optimize edilmiş arayüz</p>
-            </div>
-          </div>
-          <a href="mobile_app.html" class="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/20 transition-all shrink-0">
-            Aç 📱
-          </a>
-        </div>
 
-        <!-- Sistem Özellikleri Şerit Kartı -->
-        <div class="bg-white/5 backdrop-blur-md rounded-3xl p-5 border border-white/10 text-white space-y-2.5">
-          <h4 class="font-fun text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
-            <i class="fa-solid fa-star text-amber-300"></i> Sistemde Aktif Olan Özellikler
-          </h4>
-          <ul class="text-xs text-slate-300 space-y-2">
-            <li class="flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-emerald-400 text-[11px]"></i>
-              <span><strong>MEB 7. Sınıf Müfredatı:</strong> Tüm ders konuları açılır pencereden seçilir.</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-emerald-400 text-[11px]"></i>
-              <span><strong>Manuel Soru Girişi:</strong> Günlük çözülen soru sayıları serbestçe kaydedilir.</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-emerald-400 text-[11px]"></i>
-              <span><strong>90 Soruluk Denemeler:</strong> Türkçe 20, Mat 20, Fen 20, Sosyal 10, Din 10, İng 10.</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-emerald-400 text-[11px]"></i>
-              <span><strong>Yapay Zeka Koç:</strong> Öğrenciye özel pedagojik gelecek tahmini ve LGS termometresi.</span>
-            </li>
-            <li class="flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-emerald-400 text-[11px]"></i>
-              <span><strong>Kişisel İzolasyon:</strong> Her öğrencinin verisi birbirinden tamamen ayrı saklanır.</span>
-            </li>
-          </ul>
+            <!-- 2: Günlük 6 Ders Soru Takibi -->
+            <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 transition-all">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-sm shrink-0 mt-0.5 border border-emerald-400/20">
+                <i class="fa-solid fa-pencil"></i>
+              </div>
+              <div class="text-xs">
+                <h5 class="font-bold text-slate-100 flex items-center gap-2">
+                  <span>Günlük 6 Ders Soru Takibi</span>
+                  <span class="text-[10px] text-emerald-400 font-normal">Hedef & Gerçekleşen</span>
+                </h5>
+                <p class="text-slate-400 text-[11px] mt-0.5 leading-relaxed">Türkçe, Mat, Fen, Sosyal, Din ve İngilizce dersleri için çözülen soru sayıları anlık kaydedilir.</p>
+              </div>
+            </div>
+
+            <!-- 3: 90 Soruluk Denemeler -->
+            <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 transition-all">
+              <div class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-sm shrink-0 mt-0.5 border border-purple-400/20">
+                <i class="fa-solid fa-clipboard-check"></i>
+              </div>
+              <div class="text-xs">
+                <h5 class="font-bold text-slate-100 flex items-center gap-2">
+                  <span>90 Soruluk LGS Deneme Sınavları</span>
+                  <span class="text-[10px] text-purple-400 font-normal">Sözel + Sayısal</span>
+                </h5>
+                <p class="text-slate-400 text-[11px] mt-0.5 leading-relaxed">Türkçe 20, Mat 20, Fen 20, Sosyal 10, Din 10, İng 10 standart formatında net ve puan analizi.</p>
+              </div>
+            </div>
+
+            <!-- 4: Yapay Zeka Koç -->
+            <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 transition-all">
+              <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-sm shrink-0 mt-0.5 border border-amber-400/20">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div class="text-xs">
+                <h5 class="font-bold text-slate-100 flex items-center gap-2">
+                  <span>Yapay Zekâ Destekli Dijital Koç</span>
+                  <span class="text-[10px] text-amber-300 font-normal">Pedagojik Analiz</span>
+                </h5>
+                <p class="text-slate-400 text-[11px] mt-0.5 leading-relaxed">Öğrenciye özel pedagojik gelecek tahmini, eksik konu tespiti ve LGS başarı termometresi.</p>
+              </div>
+            </div>
+
+            <!-- 5: Kişisel İzolasyon & Bulut -->
+            <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 transition-all">
+              <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-300 flex items-center justify-center text-sm shrink-0 mt-0.5 border border-sky-400/20">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <div class="text-xs">
+                <h5 class="font-bold text-slate-100 flex items-center gap-2">
+                  <span>Kişiselleştirilmiş Veri İzolasyonu & Bulut</span>
+                  <span class="text-[10px] text-sky-400 font-normal">Supabase v6</span>
+                </h5>
+                <p class="text-slate-400 text-[11px] mt-0.5 leading-relaxed">Her öğrencinin verisi bağımsız saklanır, Supabase bulut veritabanında anında güncellenir.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Alt Güvenlik & Dönem Bilgi Şeridi -->
+          <div class="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-check text-emerald-400"></i>
+              Kişisel veri korumalı izole altyapı
+            </span>
+            <span class="text-sky-400 font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-graduation-cap"></i>
+              LGS 2027 Hazırlık
+            </span>
+          </div>
+
         </div>
 
       </div>
