@@ -181,49 +181,51 @@ async function fetchStudentFromSupabase(studentName) {
 
 /**
  * Öğrenci verisini Supabase PostgreSQL tablosuna kaydeder (Upsert: SDK + REST Fallback).
+ * useKeepAlive: sayfa kapanırken veya acil durumlarda tarayıcının isteği yarıda kesmemesi için keepalive bayrağı.
  */
-async function saveStudentToSupabase(studentName, stateData) {
+async function saveStudentToSupabase(studentName, stateData, useKeepAlive = false) {
   const cfg = getSupabaseConfig();
-  if (!cfg.url || !cfg.anonKey) return { success: false, error: "Supabase bağlı değil" };
+  if (!cfg.url || !cfg.anonKey || !studentName) return { success: false, error: "Supabase bağlı değil veya öğrenci adı eksik" };
 
   updateSupabaseStatusBadge("syncing");
 
-  // 1. JS Client ile dene
-  const client = getSupabaseClient();
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from('student_records')
-        .upsert({
-          student_name: studentName,
-          state_data: stateData,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'student_name' });
+  const payload = {
+    student_name: studentName,
+    state_data: stateData,
+    updated_at: new Date().toISOString()
+  };
 
-      if (!error) {
-        updateSupabaseStatusBadge("synced");
-        return { success: true };
+  // 1. JS Client ile dene (eğer keepalive gerektirmiyorsa ve client hazırsa)
+  if (!useKeepAlive) {
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('student_records')
+          .upsert(payload, { onConflict: 'student_name' });
+
+        if (!error) {
+          updateSupabaseStatusBadge("synced");
+          return { success: true };
+        }
+      } catch (err) {
+        console.warn("[Supabase Save SDK Hatası, REST deneniyor]:", err);
       }
-    } catch (err) {
-      console.warn("[Supabase Save SDK Hatası, REST deneniyor]:", err);
     }
   }
 
-  // 2. REST API fallback
+  // 2. REST API fallback (veya keepalive modu)
   try {
     const res = await fetch(`${cfg.url}/rest/v1/student_records`, {
       method: 'POST',
+      keepalive: useKeepAlive,
       headers: {
         'apikey': cfg.anonKey,
         'Authorization': `Bearer ${cfg.anonKey}`,
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
       },
-      body: JSON.stringify({
-        student_name: studentName,
-        state_data: stateData,
-        updated_at: new Date().toISOString()
-      })
+      body: JSON.stringify(payload)
     });
     if (res.ok || res.status === 201 || res.status === 204) {
       updateSupabaseStatusBadge("synced");
@@ -240,19 +242,32 @@ async function saveStudentToSupabase(studentName, stateData) {
 }
 
 /**
- * Değişiklik olduğunda sunucuya yüklemeyi gecikmeli (debounce) tetikler.
+ * Değişiklik olduğunda sunucuya yüklemeyi tetikler.
+ * immediate = true ise gecikmeksizin hemen kaydeder.
  */
-function queueSupabaseSave(studentName, stateData) {
-  const client = getSupabaseClient();
-  if (!client) {
+function queueSupabaseSave(studentName, stateData, immediate = false) {
+  const cfg = getSupabaseConfig();
+  if (!cfg.url || !cfg.anonKey || !studentName) {
     updateSupabaseStatusBadge("unconfigured");
     return;
   }
+
+  // Global referansı güncelle (sayfa kapanırken otomatik flush için)
+  if (typeof window !== "undefined") {
+    window._currentActiveStudentName = studentName;
+    window._currentActiveStudentState = stateData;
+  }
+
   updateSupabaseStatusBadge("pending");
   if (_supabaseDebounceTimer) clearTimeout(_supabaseDebounceTimer);
-  _supabaseDebounceTimer = setTimeout(() => {
+
+  if (immediate) {
     saveStudentToSupabase(studentName, stateData);
-  }, 1000);
+  } else {
+    _supabaseDebounceTimer = setTimeout(() => {
+      saveStudentToSupabase(studentName, stateData);
+    }, 250); // 250ms: Hızlı ve kesintisiz eşzamanlı kayıt
+  }
 }
 
 /**
@@ -417,7 +432,7 @@ async function saveCentralStudentsToSupabase(studentsList) {
     student_name: CENTRAL_STUDENTS_RECORD_NAME,
     state_data: {
       students: sanitizedList,
-      version: 5,
+      version: 6,
       updated_at: new Date().toISOString()
     },
     updated_at: new Date().toISOString()
@@ -453,10 +468,154 @@ async function saveCentralStudentsToSupabase(studentsList) {
 }
 
 /**
- * Merkezi Havuzu Yerel ve Bulut Arasında Çift Yönlü Senkronize Eder.
+ * Tek bir öğrenciyi ve tüm verilerini hem student_records tablosundan hem de merkezi havuzdan siler.
+ */
+async function deleteStudentFromSupabase(studentName) {
+  const cfg = getSupabaseConfig();
+  if (!cfg.url || !cfg.anonKey || !studentName) return { success: false };
+
+  // 1. student_records tablosundan öğrenci satırını sil
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      await client.from('student_records').delete().eq('student_name', studentName);
+    } catch(e) {}
+  }
+
+  // REST API ile de garanti sil
+  try {
+    const encName = encodeURIComponent(studentName);
+    await fetch(`${cfg.url}/rest/v1/student_records?student_name=eq.${encName}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': cfg.anonKey,
+        'Authorization': `Bearer ${cfg.anonKey}`
+      }
+    });
+  } catch(e) {}
+
+  // 2. Merkezi havuz kaydından da bu öğrenciyi çıkar
+  try {
+    const cloudRes = await fetchCentralStudentsFromSupabase();
+    if (cloudRes.success && Array.isArray(cloudRes.students)) {
+      const updated = cloudRes.students.filter(s => s.name.toLocaleLowerCase('tr-TR') !== studentName.toLocaleLowerCase('tr-TR'));
+      await saveCentralStudentsToSupabase(updated);
+    }
+  } catch(e) {}
+
+  return { success: true };
+}
+
+/**
+ * Sistemdeki TÜM kayıtlı öğrencileri ve tüm verilerini hem Supabase'den hem de yerel depolamadan tamamen temizler.
+ */
+async function deleteAllStudentsFromSupabase() {
+  const cfg = getSupabaseConfig();
+  if (!cfg.url || !cfg.anonKey) return { success: false };
+
+  // 1. student_records tablosundaki tüm öğrenci satırlarını sil (__central_registered_students__ hariç)
+  try {
+    const encCentral = encodeURIComponent(CENTRAL_STUDENTS_RECORD_NAME);
+    await fetch(`${cfg.url}/rest/v1/student_records?student_name=neq.${encCentral}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': cfg.anonKey,
+        'Authorization': `Bearer ${cfg.anonKey}`
+      }
+    });
+  } catch(e) {
+    console.warn("[Supabase WIPE] Satır silme hatası:", e);
+  }
+
+  // 2. Merkezi havuzu boş bir dizi ile güncelle ve wipedAt zaman damgası ekle
+  const payload = {
+    student_name: CENTRAL_STUDENTS_RECORD_NAME,
+    state_data: {
+      students: [],
+      version: 6,
+      wipedAt: new Date().toISOString()
+    },
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    await fetch(`${cfg.url}/rest/v1/student_records`, {
+      method: 'POST',
+      headers: {
+        'apikey': cfg.anonKey,
+        'Authorization': `Bearer ${cfg.anonKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch(e) {}
+
+  // 3. Yerel depolamadaki tüm öğrenci anahtarlarını temizle
+  purgeLegacyStudentStorage();
+  localStorage.setItem("fen_deneme_registered_students_v6", JSON.stringify([]));
+  localStorage.removeItem("fen_deneme_current_student_v6");
+
+  return { success: true };
+}
+
+/**
+ * Buluttaki tüm öğrenci çalışma verilerini (student_records) çeker.
+ */
+async function fetchAllStudentRecordsFromSupabase() {
+  const cfg = getSupabaseConfig();
+  if (!cfg.url || !cfg.anonKey) return { success: false, error: "Supabase bağlı değil" };
+
+  try {
+    const encCentral = encodeURIComponent(CENTRAL_STUDENTS_RECORD_NAME);
+    const res = await fetch(`${cfg.url}/rest/v1/student_records?student_name=neq.${encCentral}&select=student_name,state_data,updated_at`, {
+      method: 'GET',
+      headers: {
+        'apikey': cfg.anonKey,
+        'Authorization': `Bearer ${cfg.anonKey}`
+      }
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      return { success: true, records: rows || [] };
+    }
+  } catch(e) {
+    console.warn("[Supabase] fetchAllStudentRecords REST hatası:", e);
+  }
+
+  return { success: false, error: "Bulut verileri alınamadı" };
+}
+
+/**
+ * Eski versiyon veya çerez kalıntısı öğrenci verilerini temizler.
+ */
+function purgeLegacyStudentStorage() {
+  try {
+    const legacyKeys = [
+      "fen_deneme_registered_students_v5",
+      "fen_deneme_current_student_v5",
+      "fen_current_active_student_v5",
+      "fen_deneme_registered_students_v4",
+      "fen_deneme_current_student_v4",
+      "fen_haftalik_data_arif_said_ilkbahar",
+      "fen_haftalik_data_arif_said",
+      "arif_said_weekly_data",
+      "arif_said_data",
+      "fen_haftalik_data_ogrenci"
+    ];
+    legacyKeys.forEach(k => localStorage.removeItem(k));
+  } catch(e) {}
+}
+
+// Otomatik eski anahtar temizliği
+purgeLegacyStudentStorage();
+
+/**
+ * Merkezi Havuzu Yerel ve Bulut Arasında Senkronize Eder.
  */
 async function syncCentralStudentsWithCloud(localStudentsList = null) {
-  const STORAGE_KEY = "fen_deneme_registered_students_v5";
+  purgeLegacyStudentStorage();
+  const STORAGE_KEY = "fen_deneme_registered_students_v6";
   let localList = localStudentsList;
   if (!Array.isArray(localList)) {
     try {
@@ -469,12 +628,17 @@ async function syncCentralStudentsWithCloud(localStudentsList = null) {
 
   // Buluttan öğrencileri çek
   const cloudRes = await fetchCentralStudentsFromSupabase();
-  if (cloudRes.success && Array.isArray(cloudRes.students)) {
-    const cloudStudents = cloudRes.students;
-    
-    // Birleştirme: Hem yerel hem buluttaki öğrencileri birleştir (username ve isme göre eşleştir)
+  if (cloudRes.success) {
+    const cloudStudents = Array.isArray(cloudRes.students) ? cloudRes.students : [];
+
+    // Eğer bulut temizlenmişse (boşsa), yerel veriyi de sıfırla (eski öğrencileri diriltme!)
+    if (cloudStudents.length === 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+      return [];
+    }
+
+    // Buluttaki listeyi esas al
     const map = new Map();
-    // Önce buluttakileri ekle
     cloudStudents.forEach(st => {
       const key = (st.name || '').toLocaleLowerCase('tr-TR').trim();
       if (key) {
@@ -484,37 +648,11 @@ async function syncCentralStudentsWithCloud(localStudentsList = null) {
       }
     });
 
-    // Sonra yereldekileri ekle / güncelle
-    localList.forEach(st => {
-      const key = (st.name || '').toLocaleLowerCase('tr-TR').trim();
-      if (key) {
-        const existing = map.get(key);
-        if (existing) {
-          // Yerelde şifre veya kullanıcı adı güncellenmişse yerelinki öncelikli olsun
-          if (st.password && st.password !== "1234") existing.password = st.password;
-          if (st.username && st.username !== existing.name) existing.username = st.username;
-          if (st.sube) existing.sube = st.sube;
-          if (st.avatar) existing.avatar = st.avatar;
-          if (st.target) existing.target = st.target;
-        } else {
-          if (!st.username) st.username = st.name;
-          if (!st.password) st.password = "1234";
-          map.set(key, st);
-        }
-      }
-    });
-
     const merged = Array.from(map.values());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-    
-    // Eğer yerelde bulutta olmayan yeni öğrenciler varsa buluta geri gönder
-    if (merged.length > cloudStudents.length) {
-      saveCentralStudentsToSupabase(merged);
-    }
-
     return merged;
   } else {
-    // Buluta erişilemezse yereldeki her öğrenciye varsayılan şifre ve kullanıcı adı tanımla
+    // Buluta ulaşılamadıysa yereldeki listeyi döndür
     const sanitized = (localList || []).map(st => ({
       ...st,
       username: st.username || st.name,
@@ -523,6 +661,22 @@ async function syncCentralStudentsWithCloud(localStudentsList = null) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
     return sanitized;
   }
+}
+
+// Sayfa kapanırken veya arka plana geçerken kuyruktaki veriyi keepalive ile hemen buluta gönder
+if (typeof window !== "undefined") {
+  const flushSupabasePendingSave = () => {
+    if (window._currentActiveStudentName && window._currentActiveStudentState) {
+      saveStudentToSupabase(window._currentActiveStudentName, window._currentActiveStudentState, true);
+    }
+  };
+  window.addEventListener("beforeunload", flushSupabasePendingSave);
+  window.addEventListener("pagehide", flushSupabasePendingSave);
+  window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flushSupabasePendingSave();
+    }
+  });
 }
 
 /**

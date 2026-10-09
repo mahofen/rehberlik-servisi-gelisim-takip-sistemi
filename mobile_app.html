@@ -843,8 +843,8 @@
       }
     })();
 
-    const REGISTERED_STUDENTS_KEY = "fen_deneme_registered_students_v5";
-    const CURRENT_STUDENT_KEY = "fen_deneme_current_student_v5";
+    const REGISTERED_STUDENTS_KEY = "fen_deneme_registered_students_v6";
+    const CURRENT_STUDENT_KEY = "fen_deneme_current_student_v6";
     const AVATAR_OPTIONS = ['🌟', '🚀', '🦁', '🐯', '🦅', '📚', '🎨', '🏃', '💡', '⚡', '🏆', '🌿', '🎯', '⚽', '🐬'];
 
     const DEFAULT_STUDENTS_LIST = [];
@@ -1251,11 +1251,13 @@
       renderAll();
     }
 
-    function saveState() {
+    function saveState(immediate = false) {
       localStorage.setItem(getUserStorageKey(STUDENT_NAME), JSON.stringify(state));
+      window._currentActiveStudentName = STUDENT_NAME;
+      window._currentActiveStudentState = state;
       updateMetrics();
       if (typeof queueSupabaseSave === "function") {
-        queueSupabaseSave(STUDENT_NAME, state);
+        queueSupabaseSave(STUDENT_NAME, state, immediate);
       }
     }
 
@@ -1504,11 +1506,11 @@
       wData.days[state.selectedDayIndex].topics[idx].name = val;
       saveState();
     }
-    function toggleMTopic(idx) { const wData = getOrCreateWeekData(state.selectedWeek); const t = wData.days[state.selectedDayIndex].topics[idx]; t.done = !t.done; playChime('click'); saveState(); renderDayTasks(); renderDaysTabBar(); }
+    function toggleMTopic(idx) { const wData = getOrCreateWeekData(state.selectedWeek); const t = wData.days[state.selectedDayIndex].topics[idx]; t.done = !t.done; playChime('click'); saveState(true); renderDayTasks(); renderDaysTabBar(); }
     function updateMQCount(idx, val) { const wData = getOrCreateWeekData(state.selectedWeek); wData.days[state.selectedDayIndex].questions[idx].count = Math.max(0, parseInt(val) || 0); playChime('click'); saveState(); renderDayTasks(); renderDaysTabBar(); }
-    function updateMQuestionSubject(idx, val) { const wData = getOrCreateWeekData(state.selectedWeek); wData.days[state.selectedDayIndex].questions[idx].subject = val; saveState(); renderDayTasks(); }
-    function adjustMQ(idx, delta) { const wData = getOrCreateWeekData(state.selectedWeek); const c = parseInt(wData.days[state.selectedDayIndex].questions[idx].count) || 0; wData.days[state.selectedDayIndex].questions[idx].count = Math.max(0, c + delta); playChime('click'); saveState(); renderDayTasks(); renderDaysTabBar(); }
-    function setMDailyRating(r) { const wData = getOrCreateWeekData(state.selectedWeek); wData.days[state.selectedDayIndex].rating = r; playChime('done'); saveState(); renderDayTasks(); }
+    function updateMQuestionSubject(idx, val) { const wData = getOrCreateWeekData(state.selectedWeek); wData.days[state.selectedDayIndex].questions[idx].subject = val; saveState(true); renderDayTasks(); }
+    function adjustMQ(idx, delta) { const wData = getOrCreateWeekData(state.selectedWeek); const c = parseInt(wData.days[state.selectedDayIndex].questions[idx].count) || 0; wData.days[state.selectedDayIndex].questions[idx].count = Math.max(0, c + delta); playChime('click'); saveState(true); renderDayTasks(); renderDaysTabBar(); }
+    function setMDailyRating(r) { const wData = getOrCreateWeekData(state.selectedWeek); wData.days[state.selectedDayIndex].rating = r; playChime('done'); saveState(true); renderDayTasks(); }
 
     function getSubjectMaxQuestions(subjectName) {
       if (subjectName === "Sosyal Bilgiler" || subjectName === "Din Kültürü" || subjectName === "İngilizce") {

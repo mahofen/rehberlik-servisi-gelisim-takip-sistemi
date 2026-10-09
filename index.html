@@ -342,8 +342,8 @@
 
   <!-- ================= JAVASCRIPT ================= -->
   <script>
-    const REGISTERED_STUDENTS_KEY = "fen_deneme_registered_students_v5";
-    const CURRENT_STUDENT_KEY = "fen_deneme_current_student_v5";
+    const REGISTERED_STUDENTS_KEY = "fen_deneme_registered_students_v6";
+    const CURRENT_STUDENT_KEY = "fen_deneme_current_student_v6";
     const AVATAR_OPTIONS = ['🌟', '🚀', '🦁', '🦉', '🎯', '🏆', '💡', '⚡', '🎓', '🦊', '🐯', '🦅', '🐬', '⚽', '🌿'];
 
     let selectedAvatar = '🌟';
@@ -563,14 +563,27 @@
         students.push(studentObj);
       }
 
+      // UI durumu
+      const submitBtn = document.querySelector("#studentRegistrationForm button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-300"></i> <span>Bulut Hesabı Eşitleniyor...</span>`;
+      }
+
       // 1. Yerel depolamaya kaydet
       saveRegisteredStudents(students);
 
-      // 2. Supabase Merkezi Havuzuna kaydet (Arka planda bulut senkronizasyonu)
+      // 2. Supabase Merkezi Havuzuna kaydet (Eşzamanlı - anında güncelleme)
       if (typeof saveCentralStudentsToSupabase === "function") {
-        saveCentralStudentsToSupabase(students).catch(err => {
+        try {
+          await saveCentralStudentsToSupabase(students);
+        } catch (err) {
           console.warn("[Supabase] Merkezi havuza kaydetme uyarısı:", err);
-        });
+        }
+      }
+
+      if (submitBtn) {
+        submitBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-300"></i> <span>Buluta Eşitlendi! Açılıyor 🚀</span>`;
       }
 
       selectAndProceedStudent(studentObj, true);
@@ -603,7 +616,7 @@
       if (typeof syncCentralStudentsWithCloud === "function") {
         try {
           const syncedList = await syncCentralStudentsWithCloud(students);
-          if (Array.isArray(syncedList) && syncedList.length > 0) {
+          if (Array.isArray(syncedList)) {
             students = syncedList;
             updateRegisteredStudentsUI();
           }

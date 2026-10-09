@@ -1419,8 +1419,8 @@
     /* =========================================================================
        2. ÇOKLU ÖĞRENCİ PROFİL SİSTEMİ & YÖNETİCİ KİMLİK DOĞRULAMA
        ========================================================================= */
-    const REGISTERED_STUDENTS_KEY = "fen_deneme_registered_students_v5";
-    const CURRENT_STUDENT_KEY = "fen_deneme_current_student_v5";
+    const REGISTERED_STUDENTS_KEY = "fen_deneme_registered_students_v6";
+    const CURRENT_STUDENT_KEY = "fen_deneme_current_student_v6";
     const AVATAR_OPTIONS = ['🌟', '🚀', '🦁', '🦉', '🎯', '🏆', '💡', '⚡', '🎓', '🦊', '🐯', '🦅', '🐬', '⚽', '🌿'];
 
     const DEFAULT_STUDENTS_LIST = [];
@@ -1710,11 +1710,13 @@
       renderAll();
     }
 
-    function saveState() {
+    function saveState(immediate = false) {
       localStorage.setItem(getUserDataStorageKey(STUDENT_NAME), JSON.stringify(state));
+      window._currentActiveStudentName = STUDENT_NAME;
+      window._currentActiveStudentState = state;
       updateSummaryMetrics();
       if (typeof queueSupabaseSave === "function") {
-        queueSupabaseSave(STUDENT_NAME, state);
+        queueSupabaseSave(STUDENT_NAME, state, immediate);
       }
     }
 
@@ -2292,7 +2294,7 @@
       const top = wData.days[state.selectedDayIndex].topics[idx];
       top.done = !top.done;
       playChimeSound(top.done ? 'success' : 'click');
-      saveState();
+      saveState(true);
       renderDayTasks();
       renderDaysTabBar();
     }
@@ -2300,7 +2302,7 @@
     function updateDailyQuestionSubject(idx, val) {
       const wData = getOrCreateWeekData(state.selectedWeek);
       wData.days[state.selectedDayIndex].questions[idx].subject = val;
-      saveState();
+      saveState(true);
     }
 
     function updateDailyQuestionCount(idx, val) {
@@ -2317,7 +2319,7 @@
       const cur = parseInt(wData.days[state.selectedDayIndex].questions[idx].count) || 0;
       wData.days[state.selectedDayIndex].questions[idx].count = Math.max(0, cur + delta);
       playChimeSound('click');
-      saveState();
+      saveState(true);
       renderDayTasks();
       renderDaysTabBar();
     }
@@ -2327,7 +2329,7 @@
       wData.days[state.selectedDayIndex].rating = r;
       playChimeSound('success');
       if (r === 5) confetti({ particleCount: 50, spread: 60 });
-      saveState();
+      saveState(true);
       renderDayTasks();
     }
 
@@ -2446,18 +2448,18 @@
     function saveWeekDenemeResults() {
       const wData = getOrCreateWeekData(state.selectedWeek);
       wData.deneme.note = document.getElementById("denemeNoteInput").value.trim();
-      saveState();
+      saveState(true);
       playChimeSound('success');
       confetti({ particleCount: 60, spread: 70 });
-      alert("7. Sınıf deneme sonuçları kaydedildi! 🎉");
+      alert("7. Sınıf deneme sonuçları kaydedildi ve buluta eşitlendi! 🎉");
     }
 
     function saveWeeklyReflection() {
       const wData = getOrCreateWeekData(state.selectedWeek);
       wData.weeklyReflection = document.getElementById("weeklyReflectionText").value.trim();
-      saveState();
+      saveState(true);
       playChimeSound('success');
-      alert("Haftalık değerlendirmeniz kaydedildi! ✓");
+      alert("Haftalık değerlendirmeniz kaydedildi ve buluta eşitlendi! ✓");
     }
 
     /* =========================================================================
@@ -2659,7 +2661,7 @@
 
       let students = [];
       try {
-        const raw = localStorage.getItem("fen_deneme_registered_students_v5");
+        const raw = localStorage.getItem(REGISTERED_STUDENTS_KEY);
         if (raw) students = JSON.parse(raw);
       } catch(e) {}
 
@@ -2708,13 +2710,13 @@
       if (!confirm(`"${name}" adlı öğrencinin şifresini "1234" yapmak istiyor musunuz?`)) return;
       let students = [];
       try {
-        const raw = localStorage.getItem("fen_deneme_registered_students_v5");
+        const raw = localStorage.getItem(REGISTERED_STUDENTS_KEY);
         if (raw) students = JSON.parse(raw);
       } catch(e) {}
       const st = students.find(s => s.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'));
       if (st) {
         st.password = "1234";
-        localStorage.setItem("fen_deneme_registered_students_v5", JSON.stringify(students));
+        localStorage.setItem(REGISTERED_STUDENTS_KEY, JSON.stringify(students));
         if (typeof saveCentralStudentsToSupabase === "function") {
           saveCentralStudentsToSupabase(students);
         }
