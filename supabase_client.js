@@ -551,10 +551,19 @@ async function deleteAllStudentsFromSupabase() {
     });
   } catch(e) {}
 
-  // 3. Yerel depolamadaki tüm öğrenci anahtarlarını temizle
+  // 3. Yerel depolamadaki tüm öğrenci anahtarlarını ve haftalık çalışma verilerini temizle
   purgeLegacyStudentStorage();
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith("fen_haftalik_data_") || k.startsWith("fen_deneme_") || k.startsWith("fen_current_") || k.startsWith("arif_said_"))) {
+      if (k !== SUPABASE_STORAGE_URL_KEY && k !== SUPABASE_STORAGE_KEY_KEY && k !== ADMIN_STORAGE_USER_KEY && k !== ADMIN_STORAGE_PASS_KEY) {
+        keysToRemove.push(k);
+      }
+    }
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
   localStorage.setItem("fen_deneme_registered_students_v6", JSON.stringify([]));
-  localStorage.removeItem("fen_deneme_current_student_v6");
 
   return { success: true };
 }
