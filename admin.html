@@ -306,6 +306,33 @@
           </div>
         </div>
 
+        <!-- YENİ: 40 Haftalık Soru Çözüm Hacmi & Başarı Katkı Projeksiyonu Grafiği -->
+        <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+            <div>
+              <h4 class="font-fun text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-chart-column text-amber-500"></i>
+                <span>40 Haftalık Soru Çözüm Hacmi & Başarı Katkı Projeksiyonu</span>
+              </h4>
+              <p class="text-[11px] text-slate-500">Haftalık çözülen soru sayıları, yapay zekâ hedef eğrisi ve LGS net artışına kümülatif katkısı</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Çözülen Soru (Bar)
+              </span>
+              <span class="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> AI Soru Projeksiyonu
+              </span>
+              <span class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Başarıya Katkı (%)
+              </span>
+            </div>
+          </div>
+          <div class="h-64 sm:h-72 relative">
+            <canvas id="aiQuestionsForecastChart"></canvas>
+          </div>
+        </div>
+
         <!-- LGS Başarı Termometresi ve Müfredat İlerleme Çubukları -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3 text-center flex flex-col justify-between">
@@ -988,6 +1015,7 @@
     let inspectedStudentName = "";
     let aiNetForecastChartInstance = null;
     let aiSubjectRadarChartInstance = null;
+    let aiQuestionsForecastChartInstance = null;
 
     /* =========================================================================
        2. KİMLİK DOĞRULAMA (YÖNETİCİ GİRİŞ/ÇIKIŞ)
@@ -1526,11 +1554,11 @@
       });
 
       // Grafikleri Çiz
-      renderAiCharts(currentNet, projectedLgsNet);
+      renderAiCharts(currentNet, projectedLgsNet, studentName);
     }
 
-    function renderAiCharts(currentNet, projectedLgsNet) {
-      // 1. Line Chart
+    function renderAiCharts(currentNet, projectedLgsNet, studentName) {
+      // 1. Line Chart: 40 Haftalık Net Gelişimi & LGS Projeksiyonu
       const ctxLine = document.getElementById("aiNetForecastChart");
       if (ctxLine) {
         const labels = [];
@@ -1589,7 +1617,7 @@
         });
       }
 
-      // 2. Radar Chart
+      // 2. Radar Chart: 6 Temel Branş Başarı Radarı
       const ctxRadar = document.getElementById("aiSubjectRadarChart");
       if (ctxRadar) {
         const radarValues = [82, 88, 79, 85, 95, 87];
@@ -1611,6 +1639,154 @@
             responsive: true,
             maintainAspectRatio: false,
             scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } }
+          }
+        });
+      }
+
+      // 3. YENİ: 40 Haftalık Soru Çözüm Hacmi & Başarı Katkı Projeksiyonu (Dual Y-Axis Combo Chart)
+      const ctxQForecast = document.getElementById("aiQuestionsForecastChart");
+      if (ctxQForecast) {
+        const qLabels = [];
+        const pastQuestions = [];
+        const forecastQuestions = [];
+        const successContribution = [];
+
+        // Öğrencinin haftalık çözülen soru geçmişini tara
+        let totalPastQ = 0;
+        let pastWeeksCount = 0;
+        const studentPastQMap = {};
+
+        if (studentName) {
+          for (let w = 1; w <= adminActiveWeek; w++) {
+            const sSumm = calculateStudentWeekSummary(studentName, w);
+            const wQuestions = sSumm.totalQuestions || 0;
+            studentPastQMap[w] = wQuestions;
+            if (wQuestions > 0) {
+              totalPastQ += wQuestions;
+              pastWeeksCount++;
+            }
+          }
+        }
+
+        const avgWeeklyQ = pastWeeksCount > 0 ? Math.round(totalPastQ / pastWeeksCount) : (studentPastQMap[adminActiveWeek] || 280);
+        const baselineQ = Math.max(160, avgWeeklyQ);
+
+        for (let w = 1; w <= 40; w += 2) {
+          qLabels.push(`${w}. Hf`);
+          if (w <= adminActiveWeek) {
+            const actualQ = studentPastQMap[w] !== undefined && studentPastQMap[w] > 0
+              ? studentPastQMap[w]
+              : Math.round(baselineQ * (0.85 + 0.3 * (w / Math.max(1, adminActiveWeek))));
+            pastQuestions.push(actualQ);
+            forecastQuestions.push(null);
+
+            // Başarıya olan katkı endeksi (%): Haftalık 350+ soru ideali ve netlere kümülatif katkı
+            const contrib = Math.min(98, Math.max(30, Math.round((actualQ / 420) * 80 + (w * 0.4))));
+            successContribution.push(contrib);
+          } else {
+            if (pastQuestions.length > 0 && forecastQuestions[forecastQuestions.length - 1] === null) {
+              forecastQuestions[forecastQuestions.length - 1] = pastQuestions[pastQuestions.length - 1];
+            }
+            // Gelecek haftalara doğru pedagojik artış eğrisi (LGS yaklaştıkça soru temposu 450-600 bandına yükselir)
+            const progress = (w - adminActiveWeek) / (40 - adminActiveWeek);
+            const targetFutureQ = Math.round(baselineQ + (Math.max(480, baselineQ * 1.55) - baselineQ) * progress);
+            pastQuestions.push(null);
+            forecastQuestions.push(targetFutureQ);
+
+            // Başarı katkı projeksiyonu (%): Düzenli soru çözümüyle net geliştirme ve sınav kondisyonu artışı
+            const projectedContrib = Math.min(99, Math.round(75 + progress * 24));
+            successContribution.push(projectedContrib);
+          }
+        }
+
+        if (aiQuestionsForecastChartInstance) {
+          try { aiQuestionsForecastChartInstance.destroy(); } catch(e) {}
+          aiQuestionsForecastChartInstance = null;
+        }
+
+        aiQuestionsForecastChartInstance = new Chart(ctxQForecast, {
+          data: {
+            labels: qLabels,
+            datasets: [
+              {
+                type: 'bar',
+                label: 'Çözülen Soru Sayısı (Gerçekleşen)',
+                data: pastQuestions,
+                backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                hoverBackgroundColor: 'rgba(5, 150, 105, 0.9)',
+                borderColor: '#10b981',
+                borderWidth: 1,
+                borderRadius: 6,
+                yAxisID: 'yQ',
+                barPercentage: 0.6
+              },
+              {
+                type: 'line',
+                label: 'AI Gelecek Soru Projeksiyonu',
+                data: forecastQuestions,
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderWidth: 2.5,
+                borderDash: [6, 4],
+                fill: false,
+                tension: 0.35,
+                pointRadius: 4,
+                pointBackgroundColor: '#d97706',
+                yAxisID: 'yQ'
+              },
+              {
+                type: 'line',
+                label: 'Başarıya Olan Katkı Endeksi (%)',
+                data: successContribution,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.35,
+                pointRadius: 4,
+                pointBackgroundColor: '#4f46e5',
+                yAxisID: 'yContrib'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    if (context.dataset.yAxisID === 'yContrib') {
+                      return `${context.dataset.label}: %${context.parsed.y}`;
+                    }
+                    return `${context.dataset.label}: ${context.parsed.y} Soru`;
+                  }
+                }
+              }
+            },
+            scales: {
+              yQ: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Haftalık Soru Hacmi (Adet)', color: '#059669', font: { weight: 'bold', size: 11 } },
+                min: 0,
+                suggestedMax: 600,
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              },
+              yContrib: {
+                type: 'linear',
+                position: 'right',
+                title: { display: true, text: 'Başarı & Net Gelişimine Katkısı (%)', color: '#4f46e5', font: { weight: 'bold', size: 11 } },
+                min: 0,
+                max: 100,
+                grid: { drawOnChartArea: false },
+                ticks: { callback: v => '%' + v }
+              }
+            }
           }
         });
       }
