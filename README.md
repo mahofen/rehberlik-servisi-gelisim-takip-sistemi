@@ -1,11 +1,11 @@
-# 🌟 Arif Said İlkbahar • 7. Sınıf Haftalık Gelişim, Soru & Deneme Portalı (2026 - 2027)
+# 🌟 Rehberlik Servisi Gelişim Takip Sistemi
 
-> **"7. Sınıf Müfredatını Tamamla, Günlük Sorunu Çöz, Hafta Sonu Denemesinde Zirveye Çık! 🎯"**  
-> *28 Eylül 2026 – 30 Haziran 2027 • 40 Hafta • 7. Sınıf MEB Konu Havuzu • Manuel Soru Girişi • 20'şer Soruluk Denemeler*
+> **"Şehit Gökhan Uzun İmam Hatip Ortaokulu Rehberlik Servisi • 7. Sınıf Gelişim, Soru & Deneme Portalı"**  
+> *28 Eylül 2026 – 30 Haziran 2027 • 40 Hafta • MEB Konu Havuzu • Manuel Soru Girişi • 90 Soruluk LGS Denemeleri*
 
-Bu proje; 2026-2027 eğitim-öğretim yılı boyunca **Arif Said İlkbahar**'ın akademik gelişimini, günlük ders konu çalışmalarını, manuel soru çözümlerini ve hafta sonu 20'şer soruluk branş denemelerini takip etmek için özel olarak tasarlanmıştır.
+Bu proje; 2026-2027 eğitim-öğretim yılı boyunca Şehit Gökhan Uzun İmam Hatip Ortaokulu Rehberlik Servisi koordinasyonunda öğrencilerin akademik gelişimini, günlük ders konu çalışmalarını, manuel soru çözümlerini, LGS denemelerini ve pedagojik yapay zeka koçluk projeksiyonlarını takip etmek için tasarlanmıştır.
 
-**Önemli Güncelleme:** Giriş ekranındaki güvenlik ve şifre zorunluluğu kaldırılmıştır. Sistem doğrudan **Arif Said İlkbahar** adına açılır ve tüm ilerlemeler tarayıcıya otomatik olarak anlık kaydedilir.
+**Önemli Özellikler:** Merkezi öğrenci havuzu, kullanıcı adı ve şifreli güvenli giriş sistemi, bağımsız yönetici kontrol merkezi ve Supabase bulut senkronizasyonu mevcuttur.
 
 ---
 
@@ -65,10 +65,11 @@ Her hafta sonu (Cumartesi / Pazar) 7. sınıfın 6 temel branşından 20'şer so
 ---
 
 ## 🚀 Canlı Bağlantılar
-
-* 🌐 **Canlı Web Portalı:** [https://mahofen.github.io/16-gunluk-gelisim-programi/](https://mahofen.github.io/16-gunluk-gelisim-programi/)
-* 📱 **Canlı Mobil Portalı:** [https://mahofen.github.io/16-gunluk-gelisim-programi/mobile_app.html](https://mahofen.github.io/16-gunluk-gelisim-programi/mobile_app.html)
-* 📦 **GitHub Deposu:** [https://github.com/mahofen/16-gunluk-gelisim-programi](https://github.com/mahofen/16-gunluk-gelisim-programi)
+ 
+* 🌐 **Canlı Web Portalı:** [https://mahofen.github.io/rehberlik-servisi-gelisim-takip-sistemi/](https://mahofen.github.io/rehberlik-servisi-gelisim-takip-sistemi/)
+* 📱 **Canlı Mobil Portalı:** [https://mahofen.github.io/rehberlik-servisi-gelisim-takip-sistemi/mobile_app.html](https://mahofen.github.io/rehberlik-servisi-gelisim-takip-sistemi/mobile_app.html)
+* 🛡️ **Yönetici Kontrol Merkezi:** [https://mahofen.github.io/rehberlik-servisi-gelisim-takip-sistemi/admin.html](https://mahofen.github.io/rehberlik-servisi-gelisim-takip-sistemi/admin.html)
+* 📦 **GitHub Deposu:** [https://github.com/mahofen/rehberlik-servisi-gelisim-takip-sistemi](https://github.com/mahofen/rehberlik-servisi-gelisim-takip-sistemi)
 
 ---
 
