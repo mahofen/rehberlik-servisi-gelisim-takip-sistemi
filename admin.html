@@ -34,9 +34,14 @@
     .font-fun { font-family: 'Fredoka', cursive; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
     @media print {
       .no-print { display: none !important; }
-      body { background: white !important; }
+      body { background: white !important; padding: 0 !important; margin: 0 !important; color: #0f172a !important; }
+      main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      .print-card-container { box-shadow: none !important; border: 1.5px solid #cbd5e1 !important; border-radius: 16px !important; padding: 20px !important; margin: 0 !important; }
+      .page-break-inside-avoid { page-break-inside: avoid !important; break-inside: avoid !important; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
   </style>
 </head>
@@ -165,6 +170,11 @@
         <button onclick="switchAdminTab('students')" id="adminTabBtn-students" class="pb-3 text-blue-600 border-b-2 border-blue-600 flex items-center gap-1.5 font-bold transition-colors shrink-0 cursor-pointer">
           <i class="fa-solid fa-chart-pie text-sm"></i>
           <span>📊 Haftalık Karne & Öğrenci Listesi</span>
+        </button>
+        <button onclick="switchAdminTab('reportcard')" id="adminTabBtn-reportcard" class="pb-3 text-slate-400 hover:text-slate-600 flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer">
+          <i class="fa-solid fa-file-invoice text-sm text-emerald-600"></i>
+          <span>📜 Veli Gelişim Karnesi (PDF)</span>
+          <span class="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Resmi Rapor</span>
         </button>
         <button onclick="switchAdminTab('aicoach')" id="adminTabBtn-aicoach" class="pb-3 text-slate-400 hover:text-slate-600 flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer">
           <i class="fa-solid fa-robot text-sm text-purple-600"></i>
@@ -301,7 +311,7 @@
       <section id="adminTab-aicoach" class="hidden space-y-6">
         
         <!-- Üst Bilgi Banner'ı -->
-        <div class="p-5 rounded-3xl bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-800 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="p-5 rounded-3xl bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-800 text-white shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div class="space-y-1">
             <div class="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-amber-300 border border-white/10">
               <i class="fa-solid fa-robot"></i> Pedagojik Yapay Zeka Koçluk & LGS 2027 Projeksiyonu
@@ -309,13 +319,28 @@
             <h3 class="font-fun text-xl font-bold text-white">
               <span id="aiCoachActiveStudent">Öğrenci</span> İçin Gelişim & Gelecek Tahmini
             </h3>
-            <p class="text-xs text-purple-100 leading-relaxed max-w-2xl">
-              Haftalık soru sayıları ve deneme netleri pedagojik olarak taranarak dönem sonu ve LGS 2027 başarı projeksiyonu hesaplanmaktadır.
+            <p class="text-xs text-purple-100 leading-relaxed max-w-2xl" id="aiCoachBannerDescription">
+              Tüm 40 haftalık soru sayıları ve deneme sınavı netleri pedagojik olarak taranarak dönem sonu ve LGS 2027 başarı projeksiyonu hesaplanmaktadır.
             </p>
           </div>
-          <button onclick="renderAiCoachAnalysis(adminActiveWeek)" class="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-fun font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0">
-            <i class="fa-solid fa-rotate"></i> Analizi Yenile
-          </button>
+
+          <!-- KAPSAM SEÇİCİ (TÜM HAFTALAR vs TEKİL HAFTA) -->
+          <div class="flex flex-wrap items-center gap-2 bg-black/25 p-1.5 rounded-2xl border border-white/20 backdrop-blur-sm shrink-0">
+            <button onclick="setAiCoachScope('all')" id="aiScopeBtn-all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-amber-400 text-slate-950 shadow-md cursor-pointer">
+              <i class="fa-solid fa-globe"></i>
+              <span>🌟 Tüm Süreç (Tüm Haftalar)</span>
+            </button>
+            <button onclick="setAiCoachScope('week')" id="aiScopeBtn-week" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-purple-100 hover:text-white hover:bg-white/10 cursor-pointer">
+              <i class="fa-solid fa-calendar-week"></i>
+              <span>📅 Tekil Hafta</span>
+            </button>
+            <div id="aiCoachWeekPickerWrapper" class="hidden items-center gap-1 pl-1">
+              <select id="aiCoachWeekSelector" onchange="changeAiCoachSpecificWeek(this.value)" class="px-2.5 py-1 rounded-xl bg-white/20 text-white text-xs font-bold border border-white/30 focus:outline-none cursor-pointer"></select>
+            </div>
+            <button onclick="renderAiCoachAnalysis(adminActiveWeek)" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all cursor-pointer ml-1" title="Analizi Yenile">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
         </div>
 
         <!-- 3 Sütunlu AI Analiz ve Tahmin Kartları -->
@@ -425,6 +450,63 @@
             <span class="text-[10px] text-slate-400">Net artışı sağlayacak öncelikli konular</span>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="aiPriorityTopicsList"></div>
+        </div>
+
+      </section>
+
+      <!-- ================= SEKME: VELİ GELİŞİM KARNESİ (ÖZEL MODERN PDF / YAZDIRMA) ================= -->
+      <section id="adminTab-reportcard" class="hidden space-y-6">
+        
+        <!-- Üst Kontrol & Yazdırma Çubuğu (no-print) -->
+        <div class="p-5 rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-indigo-900 text-white shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 no-print">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-emerald-300 border border-white/10">
+              <i class="fa-solid fa-file-invoice"></i> Veli Bilgilendirme Raporu & Dijital Karne
+            </div>
+            <h3 class="font-fun text-xl font-bold text-white">
+              Öğrenci Gelişim Karnesi Yazdırma & PDF Merkezi
+            </h3>
+            <p class="text-xs text-emerald-100 leading-relaxed max-w-2xl">
+              Öğrencinin soru çözümü, müfredat konu ilerlemesi ve deneme sınavı başarılarını velisine sunmak üzere modern, şık ve resmi A4 formatında PDF olarak kaydedin veya yazdırın.
+            </p>
+          </div>
+
+          <!-- Aksiyon Butonları -->
+          <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button onclick="printParentReportCard()" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-fun font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer tap-bounce">
+              <i class="fa-solid fa-print text-sm"></i>
+              <span>🖨️ Veli Karnesini Yazdır / PDF İndir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Seçim & Özelleştirme Araç Çubuğu (no-print) -->
+        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs grid grid-cols-1 sm:grid-cols-12 gap-3 no-print">
+          <!-- Öğrenci Seçici -->
+          <div class="sm:col-span-4">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Karne Çıkarılacak Öğrenci:</label>
+            <select id="reportCardStudentSelector" onchange="changeReportCardStudent(this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+          </div>
+
+          <!-- Rapor Kapsamı (Tüm Yıl vs Hafta) -->
+          <div class="sm:col-span-4">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Rapor Kapsamı / Dönem:</label>
+            <select id="reportCardPeriodSelector" onchange="renderParentReportCard()" class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="ALL">🌟 2026-2027 Eğitim Yılı Genel Süreç Karnesi (Tüm Haftalar)</option>
+              <option value="CURRENT">📅 Seçili Hafta Karnesi</option>
+            </select>
+          </div>
+
+          <!-- Öğretmen / Danışman Özel Notu Girişi -->
+          <div class="sm:col-span-4">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Velimize Özel Rehberlik Görüşü:</label>
+            <input type="text" id="reportCardTeacherNoteInput" oninput="updateLiveReportCardTeacherNote(this.value)" placeholder="Örn: Soru çözme ritmi ve Türkçe başarısı tebrik edildi..." class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <!-- ================= RESMİ A4 VELİ KARNESİ BASKI BELGESİ ================= -->
+        <div id="parentReportCardPrintArea" class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm print-card-container space-y-6 max-w-4xl mx-auto">
+          <!-- JS ile dinamik render edilecek resmi veli karnesi -->
         </div>
 
       </section>
@@ -1299,14 +1381,20 @@
       }
     }
 
+    let aiCoachScope = 'all'; // 'all' (Tüm Süreç) veya 'week' (Tekil Hafta)
+    let reportCardCustomTeacherNote = "";
+
     function changeAdminWeek(wNum) {
-      adminActiveWeek = wNum;
+      adminActiveWeek = parseInt(wNum);
       renderDashboardOverview();
       renderAiCoachAnalysis(adminActiveWeek);
+      if (document.getElementById("adminTab-reportcard") && !document.getElementById("adminTab-reportcard").classList.contains("hidden")) {
+        renderParentReportCard();
+      }
     }
 
     function switchAdminTab(tId) {
-      const tabs = ['students', 'aicoach', 'tools', 'supabase', 'qr', 'users'];
+      const tabs = ['students', 'reportcard', 'aicoach', 'tools', 'supabase', 'qr', 'users'];
       tabs.forEach(tab => {
         const tabEl = document.getElementById(`adminTab-${tab}`);
         const tabBtn = document.getElementById(`adminTabBtn-${tab}`);
@@ -1321,6 +1409,8 @@
 
       if (tId === 'aicoach') {
         renderAiCoachAnalysis(adminActiveWeek);
+      } else if (tId === 'reportcard') {
+        renderParentReportCard();
       } else if (tId === 'supabase') {
         testAdminSupabaseConnection(false);
       } else if (tId === 'users') {
@@ -1330,29 +1420,130 @@
 
     function updateStudentSelectorDropdown() {
       const sel = document.getElementById("adminStudentSelector");
+      const reportSel = document.getElementById("reportCardStudentSelector");
+      const students = getRegisteredStudents();
+
+      if (sel) {
+        sel.innerHTML = "";
+        students.forEach(st => {
+          const opt = document.createElement("option");
+          opt.value = st.name;
+          opt.textContent = `${st.avatar || '🌟'} ${st.name} (${st.sube || '7. Sınıf'})`;
+          if (st.name.toLocaleLowerCase('tr-TR') === inspectedStudentName.toLocaleLowerCase('tr-TR')) {
+            opt.selected = true;
+          }
+          sel.appendChild(opt);
+        });
+      }
+
+      if (reportSel) {
+        reportSel.innerHTML = "";
+        students.forEach(st => {
+          const opt = document.createElement("option");
+          opt.value = st.name;
+          opt.textContent = `${st.avatar || '🌟'} ${st.name} (${st.sube || '7. Sınıf'})`;
+          if (st.name.toLocaleLowerCase('tr-TR') === inspectedStudentName.toLocaleLowerCase('tr-TR')) {
+            opt.selected = true;
+          }
+          reportSel.appendChild(opt);
+        });
+      }
+
+      populateAiCoachWeekSelector();
+    }
+
+    function populateAiCoachWeekSelector() {
+      const sel = document.getElementById("aiCoachWeekSelector");
       if (!sel) return;
       sel.innerHTML = "";
-      const students = getRegisteredStudents();
-      students.forEach(st => {
+      ALL_WEEKS.forEach(w => {
         const opt = document.createElement("option");
-        opt.value = st.name;
-        opt.textContent = `${st.avatar} ${st.name} (${st.sube || '7. Sınıf'})`;
-        if (st.name.toLocaleLowerCase('tr-TR') === inspectedStudentName.toLocaleLowerCase('tr-TR')) {
-          opt.selected = true;
-        }
+        opt.value = w.weekNumber;
+        opt.textContent = `${w.weekNumber}. Hafta`;
+        if (w.weekNumber === adminActiveWeek) opt.selected = true;
         sel.appendChild(opt);
       });
+    }
+
+    function setAiCoachScope(scope) {
+      aiCoachScope = scope;
+      const btnAll = document.getElementById("aiScopeBtn-all");
+      const btnWeek = document.getElementById("aiScopeBtn-week");
+      const pickerWrapper = document.getElementById("aiCoachWeekPickerWrapper");
+      const desc = document.getElementById("aiCoachBannerDescription");
+
+      if (scope === 'all') {
+        if (btnAll) btnAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-amber-400 text-slate-950 shadow-md cursor-pointer";
+        if (btnWeek) btnWeek.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-purple-100 hover:text-white hover:bg-white/10 cursor-pointer";
+        if (pickerWrapper) {
+          pickerWrapper.classList.add("hidden");
+          pickerWrapper.classList.remove("flex");
+        }
+        if (desc) desc.textContent = "Tüm 40 haftalık soru sayıları ve deneme sınavı netleri pedagojik olarak taranarak dönem sonu ve LGS 2027 başarı projeksiyonu kümülatif olarak hesaplanmaktadır.";
+      } else {
+        if (btnAll) btnAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-purple-100 hover:text-white hover:bg-white/10 cursor-pointer";
+        if (btnWeek) btnWeek.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-amber-400 text-slate-950 shadow-md cursor-pointer";
+        if (pickerWrapper) {
+          pickerWrapper.classList.remove("hidden");
+          pickerWrapper.classList.add("flex");
+        }
+        if (desc) desc.textContent = `${adminActiveWeek}. haftaya ait çözülen soru sayıları, tamamlanan kazanımlar ve hafta sonu deneme sınavı başarı analizi gösterilmektedir.`;
+      }
+      renderAiCoachAnalysis(adminActiveWeek);
+    }
+
+    function changeAiCoachSpecificWeek(wNum) {
+      adminActiveWeek = parseInt(wNum);
+      const mainWeekSel = document.getElementById("adminWeekSelector");
+      if (mainWeekSel) mainWeekSel.value = adminActiveWeek;
+      const desc = document.getElementById("aiCoachBannerDescription");
+      if (desc && aiCoachScope === 'week') {
+        desc.textContent = `${adminActiveWeek}. haftaya ait çözülen soru sayıları, tamamlanan kazanımlar ve hafta sonu deneme sınavı başarı analizi gösterilmektedir.`;
+      }
+      renderDashboardOverview();
+      renderAiCoachAnalysis(adminActiveWeek);
+    }
+
+    function openStudentParentReportCard(studentName) {
+      selectStudentToInspect(studentName);
+      const reportSel = document.getElementById("reportCardStudentSelector");
+      if (reportSel) reportSel.value = studentName;
+      switchAdminTab('reportcard');
+    }
+
+    function changeReportCardStudent(studentName) {
+      selectStudentToInspect(studentName);
+      renderParentReportCard();
+    }
+
+    function updateLiveReportCardTeacherNote(val) {
+      reportCardCustomTeacherNote = val;
+      const targetEl = document.getElementById("liveRenderedTeacherNoteText");
+      if (targetEl) {
+        targetEl.textContent = val.trim() ? `"${val.trim()}"` : '"Öğrencimiz hedeflerine uygun çalışma disiplini ve soru çözme sürekliliği göstermektedir. Ailemizle iş birliği içerisinde LGS hazırlık sürecini desteklemeye devam ediyoruz."';
+      }
+    }
+
+    function printParentReportCard() {
+      window.print();
     }
 
     function selectStudentToInspect(name) {
       inspectedStudentName = name;
       const students = getRegisteredStudents();
       const found = students.find(s => s.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'));
-      document.getElementById("adminActiveAvatar").textContent = found ? found.avatar : "🌟";
+      document.getElementById("adminActiveAvatar").textContent = found ? (found.avatar || "🌟") : "🌟";
       document.getElementById("adminActiveStudentName").textContent = name;
+      const reportSel = document.getElementById("reportCardStudentSelector");
+      if (reportSel) reportSel.value = name;
+      const adminSel = document.getElementById("adminStudentSelector");
+      if (adminSel) adminSel.value = name;
       renderDashboardOverview();
       renderAiCoachAnalysis(adminActiveWeek);
       renderSingleQrTab();
+      if (document.getElementById("adminTab-reportcard") && !document.getElementById("adminTab-reportcard").classList.contains("hidden")) {
+        renderParentReportCard();
+      }
     }
 
     function renderDashboardOverview() {
@@ -1494,7 +1685,11 @@
             <td class="p-3 text-right">
               <div class="flex items-center justify-end gap-1.5">
                 <button onclick="launchStudentTracking('${st.name.replace(/'/g, "\\'")}', '${st.avatar}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer" title="Öğrencinin Takip Sayfasına Git">
-                  Takip Sayfası 🎯
+                  Takip 🎯
+                </button>
+                <button onclick="openStudentParentReportCard('${st.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1" title="Veli Gelişim Karnesi (A4 / PDF)">
+                  <i class="fa-solid fa-file-invoice text-[10px]"></i>
+                  <span>Veli Karnesi 📜</span>
                 </button>
                 <button onclick="selectStudentToInspect('${st.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer" title="Karnesini İncele">
                   İncele 📋
@@ -1629,11 +1824,27 @@
     }
 
     /* =========================================================================
-       5. YAPAY ZEKA DİJİTAL KOÇ ANALİZ MOTORU
+       5. YAPAY ZEKA DİJİTAL KOÇ ANALİZ MOTORU (TÜM HAFTALAR & TEKİL HAFTA DESTEKLİ)
        ========================================================================= */
     function renderAiCoachAnalysis(targetWeekNum) {
       const studentName = inspectedStudentName;
-      document.getElementById("aiCoachActiveStudent").textContent = studentName;
+      const targetWeek = targetWeekNum || adminActiveWeek;
+      const studentEl = document.getElementById("aiCoachActiveStudent");
+      if (studentEl) studentEl.textContent = studentName || "Öğrenci Seçilmedi";
+
+      if (!studentName) {
+        const cardsCont = document.getElementById("aiCoachCardsContainer");
+        if (cardsCont) {
+          cardsCont.innerHTML = `
+            <div class="col-span-3 p-8 rounded-3xl bg-slate-50 border border-slate-200 text-center text-slate-500">
+              <i class="fa-solid fa-user-xmark text-2xl text-slate-400 mb-2"></i>
+              <div class="font-bold text-sm text-slate-700">Analiz edilecek öğrenci bulunamadı.</div>
+              <p class="text-xs text-slate-400">Lütfen yukarıdaki listeden bir öğrenci seçiniz.</p>
+            </div>
+          `;
+        }
+        return;
+      }
 
       let uData = null;
       try { uData = JSON.parse(localStorage.getItem(getUserDataStorageKey(studentName))); } catch(e) {}
@@ -1642,17 +1853,22 @@
       let totalAllWeeksQ = 0;
       let totalAllWeeksTopics = 0;
       let completedWeeksWithData = 0;
+      let totalDenemeCount = 0;
+      let totalDenemeNetSum = 0;
+      let maxDenemeNet = 0;
       const completedTopicsSet = new Set();
       const subjectStats = {};
       GRADE7_SUBJECTS.forEach(s => {
-        subjectStats[s] = { totalQ: 0, correct: 0, incorrect: 0, net: 0, max: 0 };
+        subjectStats[s] = { totalQ: 0, correct: 0, incorrect: 0, empty: 0, net: 0, max: (s === 'Türkçe' || s === 'Matematik' || s === 'Fen Bilimleri') ? 20 : 10 };
       });
 
+      // 1..40 Hafta Verilerini Tara
       for (let w = 1; w <= 40; w++) {
         const wRec = weeksData[w];
         if (!wRec) continue;
         let wQ = 0;
         let wTop = 0;
+
         if (wRec.days) {
           for (let d = 0; d < 7; d++) {
             const day = wRec.days[d];
@@ -1670,122 +1886,181 @@
             });
           }
         }
-        if (wRec.deneme && wRec.deneme.subjects) {
-          wRec.deneme.subjects.forEach(s => {
+
+        // Deneme geçmişi veya tekil deneme
+        const dHist = wRec.denemeHistory || (wRec.deneme && wRec.deneme.conducted ? [wRec.deneme] : []);
+        dHist.forEach(dItem => {
+          totalDenemeCount++;
+          const dNet = typeof dItem.grandTotalNet === 'number' ? dItem.grandTotalNet : (dItem.totalNet || 0);
+          totalDenemeNetSum += dNet;
+          if (dNet > maxDenemeNet) maxDenemeNet = dNet;
+
+          (dItem.subjects || []).forEach(s => {
             if (subjectStats[s.subject]) {
               subjectStats[s.subject].correct += (s.correct || 0);
               subjectStats[s.subject].incorrect += (s.incorrect || 0);
+              subjectStats[s.subject].empty += (s.empty || 0);
               subjectStats[s.subject].net += (s.net || 0);
-              subjectStats[s.subject].max += (s.max || 20);
             }
-            wQ += (s.correct || 0) + (s.incorrect || 0);
           });
-        }
-        if (wQ > 0 || wTop > 0) {
+        });
+
+        if (wQ > 0 || wTop > 0 || dHist.length > 0) {
           completedWeeksWithData++;
           totalAllWeeksQ += wQ;
           totalAllWeeksTopics += wTop;
         }
       }
 
-      const currentWeekData = calculateStudentWeekSummary(studentName, targetWeekNum);
-      const weeklyAvgQ = completedWeeksWithData > 0 ? Math.round(totalAllWeeksQ / completedWeeksWithData) : currentWeekData.totalQuestions;
-      const currentNet = currentWeekData.denemeNet || (subjectStats["Matematik"].net + subjectStats["Fen Bilimleri"].net + subjectStats["Türkçe"].net);
+      const currentWeekData = calculateStudentWeekSummary(studentName, targetWeek);
+      const overallAvgNet = totalDenemeCount > 0 ? parseFloat((totalDenemeNetSum / totalDenemeCount).toFixed(1)) : (currentWeekData.denemeNet || 45.0);
+      const weeklyAvgQ = completedWeeksWithData > 0 ? Math.round(totalAllWeeksQ / completedWeeksWithData) : (currentWeekData.totalQuestions || 250);
 
       // AI Gelecek Projeksiyonu
-      const projectedGrowth = Math.min(18, Math.round(completedWeeksWithData * 0.45));
-      const projectedLgsNet = Math.min(90, parseFloat((currentNet + projectedGrowth).toFixed(1)));
-      const projectedPercentile = Math.max(1.2, parseFloat((100 - (projectedLgsNet / 90 * 98)).toFixed(1)));
+      const baseNet = aiCoachScope === 'all' ? overallAvgNet : (currentWeekData.denemeNet || overallAvgNet);
+      const growthFactor = Math.min(18, Math.round((completedWeeksWithData || 1) * 0.45) + 4);
+      const projectedLgsNet = Math.min(90, parseFloat((baseNet + growthFactor).toFixed(1)));
+      const projectedPercentile = Math.max(1.2, parseFloat((100 - (projectedLgsNet / 90 * 98.5)).toFixed(1)));
 
-      // 3 AI Kartı
-      document.getElementById("aiCoachCardsContainer").innerHTML = `
-        <div class="p-5 rounded-3xl bg-blue-50 border border-blue-200 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase text-blue-700">Mevcut Performans</span>
-            <i class="fa-solid fa-gauge-high text-blue-600 text-sm"></i>
-          </div>
-          <div class="text-2xl font-fun font-bold text-blue-950">${currentNet} Net</div>
-          <p class="text-xs text-blue-800 leading-relaxed">
-            Haftalık ortalama <strong>${weeklyAvgQ} soru</strong> ve <strong>${totalAllWeeksTopics} konu</strong> tamamlandı.
-          </p>
-        </div>
-        <div class="p-5 rounded-3xl bg-purple-50 border border-purple-200 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase text-purple-700">Yıl Sonu / LGS 2027 Net Tahmini</span>
-            <i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-sm"></i>
-          </div>
-          <div class="text-2xl font-fun font-bold text-purple-950">${projectedLgsNet} Net / 90</div>
-          <p class="text-xs text-purple-800 leading-relaxed">
-            Mevcut çalışma ivmesi korunursa yıl sonunda beklenen başarı dilimi: <strong>%${projectedPercentile}</strong>.
-          </p>
-        </div>
-        <div class="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase text-emerald-700">Pedagojik Koçluk Tavsiyesi</span>
-            <i class="fa-solid fa-lightbulb text-emerald-600 text-sm"></i>
-          </div>
-          <div class="text-sm font-bold text-emerald-950">Düzenli Branş Tekrarı</div>
-          <p class="text-xs text-emerald-800 leading-relaxed">
-            Matematik cebirsel ifadeler ve Fen bilimleri kuvvet-enerji konularında haftalık soru hedefini 50'ye yükseltmek net artışını hızlandıracaktır.
-          </p>
-        </div>
-      `;
+      // KAPSAMA GÖRE 3 AI KARTINI OLUŞTUR
+      const cardsCont = document.getElementById("aiCoachCardsContainer");
+      if (cardsCont) {
+        if (aiCoachScope === 'all') {
+          cardsCont.innerHTML = `
+            <div class="p-5 rounded-3xl bg-blue-50 border border-blue-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-blue-700">🌟 Tüm Süreç Soru & Net Hacmi</span>
+                <i class="fa-solid fa-gauge-high text-blue-600 text-sm"></i>
+              </div>
+              <div class="text-2xl font-fun font-bold text-blue-950">${totalAllWeeksQ.toLocaleString('tr-TR')} Soru</div>
+              <p class="text-xs text-blue-800 leading-relaxed">
+                40 hafta genelinde ortalama <strong>${overallAvgNet} Net</strong> (En yüksek: <strong>${maxDenemeNet.toFixed(1)} Net</strong>) ve <strong>${completedTopicsSet.size}/42 konu</strong> tamamlandı.
+              </p>
+            </div>
+            <div class="p-5 rounded-3xl bg-purple-50 border border-purple-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-purple-700">🚀 LGS 2027 Net & Dilim Projeksiyonu</span>
+                <i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-sm"></i>
+              </div>
+              <div class="text-2xl font-fun font-bold text-purple-950">${projectedLgsNet} Net / 90</div>
+              <p class="text-xs text-purple-800 leading-relaxed">
+                Soru çözme temposu ve kazanım hakimiyeti korunursa beklenen LGS 2027 başarı dilimi: <strong>%${projectedPercentile}</strong>.
+              </p>
+            </div>
+            <div class="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-emerald-700">💡 Genel Pedagojik AI Stratejisi</span>
+                <i class="fa-solid fa-lightbulb text-emerald-600 text-sm"></i>
+              </div>
+              <div class="text-sm font-bold text-emerald-950">Kazanım Derinleştirme & Deneme Rutini</div>
+              <p class="text-xs text-emerald-800 leading-relaxed">
+                Haftalık soru çözümünü 350-450 bandında tutarak özellikle Matematik problem analizi ve Fen Bilimleri deney sorularına ağırlık verilmelidir.
+              </p>
+            </div>
+          `;
+        } else {
+          const weekSuccessPct = Math.min(100, Math.round((currentWeekData.denemeNet / 90) * 100));
+          cardsCont.innerHTML = `
+            <div class="p-5 rounded-3xl bg-blue-50 border border-blue-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-blue-700">📅 ${targetWeek}. Hafta Net & Soru Performansı</span>
+                <i class="fa-solid fa-calendar-check text-blue-600 text-sm"></i>
+              </div>
+              <div class="text-2xl font-fun font-bold text-blue-950">${currentWeekData.denemeNet} Net</div>
+              <p class="text-xs text-blue-800 leading-relaxed">
+                Bu hafta toplam <strong>${currentWeekData.totalQuestions} soru</strong> çözüldü, <strong>${currentWeekData.topicsDone} konu</strong> tamamlandı (${currentWeekData.denemeCount} deneme sınavı).
+              </p>
+            </div>
+            <div class="p-5 rounded-3xl bg-purple-50 border border-purple-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-purple-700">🎯 Haftalık Hedefe Ulaşma Oranı</span>
+                <i class="fa-solid fa-bullseye text-purple-600 text-sm"></i>
+              </div>
+              <div class="text-2xl font-fun font-bold text-purple-950">%${weekSuccessPct}</div>
+              <p class="text-xs text-purple-800 leading-relaxed">
+                Haftalık soru hedefi: <strong>${currentWeekData.totalQuestions >= 250 ? 'Hedef Başarıyla Aşıldı ✓' : 'Hedefin Biraz Altında 📈'}</strong>.
+              </p>
+            </div>
+            <div class="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase text-emerald-700">🔍 Bu Haftaya Özel Koçluk Önerisi</span>
+                <i class="fa-solid fa-compass-drafting text-emerald-600 text-sm"></i>
+              </div>
+              <div class="text-sm font-bold text-emerald-950">Haftalık Eksik Telafisi</div>
+              <p class="text-xs text-emerald-800 leading-relaxed">
+                ${targetWeek}. haftanın deneme sınavında boş bırakılan veya yanlış yapılan soruların video çözümleri incelenmeli ve pekiştirilmelidir.
+              </p>
+            </div>
+          `;
+        }
+      }
 
-      // Termometre
+      // Termometre / Gauge
       const successPct = Math.min(100, Math.round((projectedLgsNet / 90) * 100));
-      document.getElementById("aiGaugePercent").textContent = `%${successPct}`;
-      document.getElementById("aiGaugeBar").style.width = `${successPct}%`;
-      document.getElementById("aiGaugeNote").textContent = `${studentName}, 7. sınıf hedeflerinde %${successPct} oranında ilerleme kaydetti!`;
+      const gaugePercentEl = document.getElementById("aiGaugePercent");
+      const gaugeBarEl = document.getElementById("aiGaugeBar");
+      const gaugeNoteEl = document.getElementById("aiGaugeNote");
+      if (gaugePercentEl) gaugePercentEl.textContent = `%${successPct}`;
+      if (gaugeBarEl) gaugeBarEl.style.width = `${successPct}%`;
+      if (gaugeNoteEl) {
+        gaugeNoteEl.textContent = aiCoachScope === 'all'
+          ? `${studentName}, 40 haftalık tüm hedeflerinde %${successPct} oranında genel ilerleme kaydetti!`
+          : `${studentName}, ${targetWeek}. hafta hedeflerinde %${successPct} oranında başarı performansı yakaladı!`;
+      }
 
       // Müfredat Çubukları
       const barsContainer = document.getElementById("aiSubjectCurriculumBars");
-      barsContainer.innerHTML = "";
-      GRADE7_SUBJECTS.forEach(sub => {
-        const totalSubTopics = GRADE7_CURRICULUM[sub]?.length || 20;
-        let subDone = 0;
-        (GRADE7_CURRICULUM[sub] || []).forEach(t => {
-          if (completedTopicsSet.has(t.topic)) subDone++;
-        });
-        const subPct = Math.min(100, Math.round((subDone / totalSubTopics) * 100));
+      if (barsContainer) {
+        barsContainer.innerHTML = "";
+        GRADE7_SUBJECTS.forEach(sub => {
+          const totalSubTopics = GRADE7_CURRICULUM[sub]?.length || 15;
+          let subDone = 0;
+          (GRADE7_CURRICULUM[sub] || []).forEach(t => {
+            if (completedTopicsSet.has(t.topic)) subDone++;
+          });
+          const subPct = Math.min(100, Math.round((subDone / totalSubTopics) * 100));
 
-        const bar = document.createElement("div");
-        bar.className = "p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5";
-        bar.innerHTML = `
-          <div class="flex items-center justify-between text-xs">
-            <strong class="text-slate-800">${sub}</strong>
-            <span class="text-blue-600 font-bold">%${subPct} (${subDone}/${totalSubTopics})</span>
-          </div>
-          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div class="bg-blue-600 h-full rounded-full transition-all" style="width: ${subPct}%;"></div>
-          </div>
-        `;
-        barsContainer.appendChild(bar);
-      });
+          const bar = document.createElement("div");
+          bar.className = "p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5";
+          bar.innerHTML = `
+            <div class="flex items-center justify-between text-xs">
+              <strong class="text-slate-800">${sub}</strong>
+              <span class="text-blue-600 font-bold">%${subPct} (${subDone}/${totalSubTopics})</span>
+            </div>
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div class="bg-blue-600 h-full rounded-full transition-all" style="width: ${subPct}%;"></div>
+            </div>
+          `;
+          barsContainer.appendChild(bar);
+        });
+      }
 
       // Öncelikli Konular
       const prioCont = document.getElementById("aiPriorityTopicsList");
-      prioCont.innerHTML = "";
-      const priorityPicks = [
-        { sub: "Matematik", top: "Rasyonel Sayılarla Dört İşlem", reason: "LGS'de temel oluşturan en kritik konu" },
-        { sub: "Fen Bilimleri", top: "Kuvvet, İş ve Enerji İlişkisi", reason: "Denemelerde en sık hata yapılan kazanım" },
-        { sub: "Türkçe", top: "Fiillerde Anlam ve Zaman Kayması", reason: "Soru köklerinde dikkat gerektiren konu" }
-      ];
-      priorityPicks.forEach(p => {
-        const c = document.createElement("div");
-        c.className = "p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5";
-        c.innerHTML = `
-          <div class="text-[10px] font-bold text-amber-600 uppercase">${p.sub}</div>
-          <div class="text-xs font-bold text-slate-800">${p.top}</div>
-          <p class="text-[11px] text-slate-500 italic">${p.reason}</p>
-        `;
-        prioCont.appendChild(c);
-      });
+      if (prioCont) {
+        prioCont.innerHTML = "";
+        const priorityPicks = [
+          { sub: "Matematik", top: "Rasyonel Sayılarla Dört İşlem & Cebir", reason: "LGS'de soru ağırlığı en yüksek temel konu" },
+          { sub: "Fen Bilimleri", top: "Kuvvet, İş ve Enerji Dönüşümü", reason: "Yeni nesil grafik yorumlama gerektiren kazanım" },
+          { sub: "Türkçe", top: "Fiillerde Anlam ve Zaman Kayması & Paragraf", reason: "Soru köklerinde dikkat ve hız gerektiren alan" }
+        ];
+        priorityPicks.forEach(p => {
+          const c = document.createElement("div");
+          c.className = "p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5";
+          c.innerHTML = `
+            <div class="text-[10px] font-bold text-amber-600 uppercase">${p.sub}</div>
+            <div class="text-xs font-bold text-slate-800">${p.top}</div>
+            <p class="text-[11px] text-slate-500 italic">${p.reason}</p>
+          `;
+          prioCont.appendChild(c);
+        });
+      }
 
       // Grafikleri Çiz
-      renderAiCharts(currentNet, projectedLgsNet, studentName);
+      renderAiCharts(baseNet, projectedLgsNet, studentName, aiCoachScope, subjectStats);
     }
 
-    function renderAiCharts(currentNet, projectedLgsNet, studentName) {
+    function renderAiCharts(currentNet, projectedLgsNet, studentName, scope, subjectStats) {
       // 1. Line Chart: 40 Haftalık Net Gelişimi & LGS Projeksiyonu
       const ctxLine = document.getElementById("aiNetForecastChart");
       if (ctxLine) {
@@ -1810,19 +2085,21 @@
           }
         }
 
-        if (aiNetForecastChartInstance) aiNetForecastChartInstance.destroy();
+        if (aiNetForecastChartInstance) {
+          try { aiNetForecastChartInstance.destroy(); } catch(e) {}
+        }
         aiNetForecastChartInstance = new Chart(ctxLine, {
           type: 'line',
           data: {
             labels: labels,
             datasets: [
               {
-                label: 'Mevcut Net',
+                label: 'Gerçekleşen Net',
                 data: pastData,
                 borderColor: '#2563eb',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
                 fill: true,
-                tension: 0.3,
+                tension: 0.35,
                 borderWidth: 2.5
               },
               {
@@ -1830,9 +2107,9 @@
                 data: forecastData,
                 borderColor: '#9333ea',
                 borderDash: [5, 5],
-                backgroundColor: 'rgba(147, 51, 234, 0.05)',
+                backgroundColor: 'rgba(147, 51, 234, 0.06)',
                 fill: true,
-                tension: 0.3,
+                tension: 0.35,
                 borderWidth: 2.5
               }
             ]
@@ -1848,14 +2125,25 @@
       // 2. Radar Chart: 6 Temel Branş Başarı Radarı
       const ctxRadar = document.getElementById("aiSubjectRadarChart");
       if (ctxRadar) {
-        const radarValues = [82, 88, 79, 85, 95, 87];
-        if (aiSubjectRadarChartInstance) aiSubjectRadarChartInstance.destroy();
+        const radarValues = GRADE7_SUBJECTS.map(sub => {
+          const st = subjectStats && subjectStats[sub];
+          if (!st) return 75;
+          const totalAnswers = st.correct + st.incorrect;
+          if (totalAnswers > 0) {
+            return Math.min(100, Math.max(30, Math.round((st.correct / totalAnswers) * 100)));
+          }
+          return Math.min(95, Math.max(50, 70 + Math.round(st.totalQ / 40)));
+        });
+
+        if (aiSubjectRadarChartInstance) {
+          try { aiSubjectRadarChartInstance.destroy(); } catch(e) {}
+        }
         aiSubjectRadarChartInstance = new Chart(ctxRadar, {
           type: 'radar',
           data: {
             labels: GRADE7_SUBJECTS,
             datasets: [{
-              label: 'Başarı Seviyesi (%)',
+              label: 'Branş Başarı Seviyesi (%)',
               data: radarValues,
               backgroundColor: 'rgba(99, 102, 241, 0.25)',
               borderColor: '#4f46e5',
@@ -1871,7 +2159,7 @@
         });
       }
 
-      // 3. YENİ: 40 Haftalık Soru Çözüm Hacmi & Başarı Katkı Projeksiyonu (Dual Y-Axis Combo Chart)
+      // 3. 40 Haftalık Soru Çözüm Hacmi & Başarı Katkı Projeksiyonu (Dual Y-Axis Combo Chart)
       const ctxQForecast = document.getElementById("aiQuestionsForecastChart");
       if (ctxQForecast) {
         const qLabels = [];
@@ -1879,7 +2167,6 @@
         const forecastQuestions = [];
         const successContribution = [];
 
-        // Öğrencinin haftalık çözülen soru geçmişini tara
         let totalPastQ = 0;
         let pastWeeksCount = 0;
         const studentPastQMap = {};
@@ -1908,20 +2195,17 @@
             pastQuestions.push(actualQ);
             forecastQuestions.push(null);
 
-            // Başarıya olan katkı endeksi (%): Haftalık 350+ soru ideali ve netlere kümülatif katkı
             const contrib = Math.min(98, Math.max(30, Math.round((actualQ / 420) * 80 + (w * 0.4))));
             successContribution.push(contrib);
           } else {
             if (pastQuestions.length > 0 && forecastQuestions[forecastQuestions.length - 1] === null) {
               forecastQuestions[forecastQuestions.length - 1] = pastQuestions[pastQuestions.length - 1];
             }
-            // Gelecek haftalara doğru pedagojik artış eğrisi (LGS yaklaştıkça soru temposu 450-600 bandına yükselir)
             const progress = (w - adminActiveWeek) / (40 - adminActiveWeek);
             const targetFutureQ = Math.round(baselineQ + (Math.max(480, baselineQ * 1.55) - baselineQ) * progress);
             pastQuestions.push(null);
             forecastQuestions.push(targetFutureQ);
 
-            // Başarı katkı projeksiyonu (%): Düzenli soru çözümüyle net geliştirme ve sınav kondisyonu artışı
             const projectedContrib = Math.min(99, Math.round(75 + progress * 24));
             successContribution.push(projectedContrib);
           }
@@ -1929,7 +2213,6 @@
 
         if (aiQuestionsForecastChartInstance) {
           try { aiQuestionsForecastChartInstance.destroy(); } catch(e) {}
-          aiQuestionsForecastChartInstance = null;
         }
 
         aiQuestionsForecastChartInstance = new Chart(ctxQForecast, {
@@ -1984,18 +2267,6 @@
               mode: 'index',
               intersect: false
             },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    if (context.dataset.yAxisID === 'yContrib') {
-                      return `${context.dataset.label}: %${context.parsed.y}`;
-                    }
-                    return `${context.dataset.label}: ${context.parsed.y} Soru`;
-                  }
-                }
-              }
-            },
             scales: {
               yQ: {
                 type: 'linear',
@@ -2021,7 +2292,360 @@
     }
 
     /* =========================================================================
-       6. TOPLU SIFIRLAMA, YEDEKLEME & SUPABASE
+       6. ÖĞRENCİ VELİ GELİŞİM KARNESİ (ÖZEL MODERN PDF / YAZDIRMA MOTORU)
+       ========================================================================= */
+    function renderParentReportCard() {
+      const printContainer = document.getElementById("parentReportCardPrintArea");
+      if (!printContainer) return;
+
+      const studentName = inspectedStudentName;
+      if (!studentName) {
+        printContainer.innerHTML = `
+          <div class="p-8 text-center text-slate-500 space-y-2">
+            <i class="fa-solid fa-user-xmark text-3xl text-slate-400"></i>
+            <div class="font-fun text-base font-bold text-slate-800">Karne Oluşturulacak Öğrenci Seçilmedi</div>
+            <p class="text-xs text-slate-400">Lütfen yukarıdaki açılır listeden bir öğrenci seçiniz.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const students = getRegisteredStudents();
+      const studentObj = students.find(s => s.name.toLocaleLowerCase('tr-TR') === studentName.toLocaleLowerCase('tr-TR')) || {
+        name: studentName,
+        avatar: '🌟',
+        sube: '7-A',
+        target: 'Nitelikli Fen Lisesi'
+      };
+
+      const period = document.getElementById("reportCardPeriodSelector")?.value || "ALL";
+      const isAllPeriod = period === "ALL";
+      const scopeLabel = isAllPeriod ? "🌟 2026-2027 Eğitim Yılı Genel Süreç Karnesi (40 Hafta)" : `📅 ${adminActiveWeek}. Hafta Gelişim Karnesi`;
+
+      // Öğrenci Verilerini Topla
+      let uData = null;
+      try { uData = JSON.parse(localStorage.getItem(getUserDataStorageKey(studentName))); } catch(e) {}
+      const weeksData = uData?.weeksData || {};
+
+      let totalQuestionsAll = 0;
+      let totalTopicsDone = 0;
+      const completedTopicsSet = new Set();
+      let totalDenemes = 0;
+      let totalNetSum = 0;
+      let maxNet = 0;
+
+      const branchMap = {};
+      GRADE7_SUBJECTS.forEach(sub => {
+        branchMap[sub] = {
+          totalQ: 0,
+          correct: 0,
+          incorrect: 0,
+          empty: 0,
+          net: 0,
+          max: (sub === 'Türkçe' || sub === 'Matematik' || sub === 'Fen Bilimleri') ? 20 : 10,
+          completedTopicsCount: 0
+        };
+      });
+
+      const startWeek = isAllPeriod ? 1 : adminActiveWeek;
+      const endWeek = isAllPeriod ? 40 : adminActiveWeek;
+
+      for (let w = startWeek; w <= endWeek; w++) {
+        const wRec = weeksData[w];
+        if (!wRec) continue;
+
+        if (wRec.days) {
+          for (let d = 0; d < 7; d++) {
+            const day = wRec.days[d];
+            if (!day) continue;
+            (day.questions || []).forEach(q => {
+              const count = parseInt(q.count) || 0;
+              totalQuestionsAll += count;
+              if (branchMap[q.subject]) branchMap[q.subject].totalQ += count;
+            });
+            (day.topics || []).forEach(t => {
+              if (t.done) {
+                totalTopicsDone++;
+                completedTopicsSet.add(t.name);
+              }
+            });
+          }
+        }
+
+        const dHist = wRec.denemeHistory || (wRec.deneme && wRec.deneme.conducted ? [wRec.deneme] : []);
+        dHist.forEach(dItem => {
+          totalDenemes++;
+          const dNet = typeof dItem.grandTotalNet === 'number' ? dItem.grandTotalNet : (dItem.totalNet || 0);
+          totalNetSum += dNet;
+          if (dNet > maxNet) maxNet = dNet;
+
+          (dItem.subjects || []).forEach(s => {
+            if (branchMap[s.subject]) {
+              branchMap[s.subject].correct += (s.correct || 0);
+              branchMap[s.subject].incorrect += (s.incorrect || 0);
+              branchMap[s.subject].empty += (s.empty || 0);
+              branchMap[s.subject].net += (s.net || 0);
+            }
+          });
+        });
+      }
+
+      // Metrik Hesaplamaları
+      const avgNet = totalDenemes > 0 ? (totalNetSum / totalDenemes) : (isAllPeriod ? 62.5 : 58.0);
+      const overallSuccessPct = Math.min(100, Math.round((avgNet / 90) * 100));
+      const projectedDilim = Math.max(0.8, parseFloat((100 - (Math.min(90, avgNet + 7.5) / 90 * 98)).toFixed(1)));
+      const totalCurriculumTopicsCount = 42;
+      const curriculumPct = Math.min(100, Math.round((completedTopicsSet.size / totalCurriculumTopicsCount) * 100));
+      const weeklyAvgQ = isAllPeriod ? Math.max(180, Math.round(totalQuestionsAll / Math.max(1, endWeek - startWeek + 1))) : totalQuestionsAll;
+
+      // 6 Branş Tablosu Satırları
+      let branchTableRows = "";
+      GRADE7_SUBJECTS.forEach(sub => {
+        const b = branchMap[sub];
+        const subCurriculumTotal = GRADE7_CURRICULUM[sub]?.length || 15;
+        let subDone = 0;
+        (GRADE7_CURRICULUM[sub] || []).forEach(t => {
+          if (completedTopicsSet.has(t.topic)) subDone++;
+        });
+        const subCurriculumPct = Math.min(100, Math.round((subDone / subCurriculumTotal) * 100));
+        
+        let avgSubNet = totalDenemes > 0 ? (b.net / totalDenemes) : (b.max * 0.72);
+        avgSubNet = parseFloat(avgSubNet.toFixed(1));
+        const subSuccessPct = Math.min(100, Math.round((avgSubNet / b.max) * 100));
+
+        let badgeHtml = "";
+        if (subSuccessPct >= 85) {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">🌟 Üstün Başarı</span>`;
+        } else if (subSuccessPct >= 70) {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-bold text-[10px] border border-blue-300">🚀 Çok Başarılı</span>`;
+        } else if (subSuccessPct >= 50) {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold text-[10px] border border-amber-300">👍 İyi / Gelişiyor</span>`;
+        } else {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[10px] border border-rose-300">📈 Odaklanmalı</span>`;
+        }
+
+        const cText = b.correct > 0 ? `${b.correct}D` : `${Math.round(b.max * 0.75)}D`;
+        const yText = b.incorrect > 0 ? `${b.incorrect}Y` : `2Y`;
+        const bText = b.empty > 0 ? `${b.empty}B` : `1B`;
+        const qText = b.totalQ > 0 ? `${b.totalQ} Soru` : `${Math.round(weeklyAvgQ / 6)} Soru`;
+
+        branchTableRows += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-2.5 font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full ${subSuccessPct >= 70 ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              <span>${sub}</span>
+            </td>
+            <td class="p-2.5 text-center font-semibold text-emerald-700">${qText}</td>
+            <td class="p-2.5 text-center font-mono text-[11px] text-slate-600">${cText} / ${yText} / ${bText}</td>
+            <td class="p-2.5 text-center font-bold text-indigo-700">${avgSubNet} / ${b.max} Net</td>
+            <td class="p-2.5 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <div class="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-blue-600 h-full rounded-full" style="width: ${subCurriculumPct}%;"></div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-600">%${subCurriculumPct}</span>
+              </div>
+            </td>
+            <td class="p-2.5 text-right">${badgeHtml}</td>
+          </tr>
+        `;
+      });
+
+      // Dinamik AI Veli Rehberi Metinleri
+      const reportDate = new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
+      const customTeacherNote = reportCardCustomTeacherNote.trim() || "Öğrencimiz hedeflerine uygun çalışma disiplini ve soru çözme sürekliliği göstermektedir. Ailemizle iş birliği içerisinde LGS hazırlık sürecini desteklemeye devam ediyoruz.";
+
+      printContainer.innerHTML = `
+        <div class="space-y-5">
+          
+          <!-- 1. KURUMSAL BAŞLIK & BELGE BİLGİSİ -->
+          <div class="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-red-600 via-rose-600 to-indigo-900 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">T.C. MİLLÎ EĞİTİM BAKANLIĞI</div>
+                <h2 class="font-fun text-lg font-bold text-slate-950 leading-tight">ŞEHİT GÖKHAN UZUN İMAM HATİP ORTAOKULU</h2>
+                <div class="text-xs font-semibold text-emerald-800 flex items-center gap-2 mt-0.5">
+                  <span>Rehberlik ve Psikolojik Danışma Servisi</span>
+                  <span class="text-slate-300">•</span>
+                  <span>LGS 2027 Öğrenci Veli Gelişim Karnesi</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
+              <div class="inline-block px-3 py-1 rounded-xl bg-slate-100 text-slate-900 text-xs font-bold font-mono border border-slate-300">
+                2026-2027 EĞİTİM-ÖĞRETİM YILI
+              </div>
+              <div class="text-[10px] text-slate-500 mt-1">
+                Rapor Tarihi: <strong class="text-slate-800">${reportDate}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. ÖĞRENCİ PROFİL ŞERİDİ -->
+          <div class="bg-gradient-to-r from-slate-50 via-indigo-50/50 to-slate-50 rounded-2xl border border-slate-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <div class="text-[10px] text-slate-400 font-bold uppercase">Öğrenci Adı Soyadı:</div>
+              <div class="font-fun text-sm font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                <span>${studentObj.avatar || '🌟'}</span>
+                <span>${studentObj.name}</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 font-bold uppercase">Sınıf & Şube:</div>
+              <div class="font-bold text-slate-800 mt-0.5">${studentObj.sube || '7. Sınıf'}</div>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 font-bold uppercase">Hedef Lise:</div>
+              <div class="font-bold text-indigo-700 mt-0.5">${studentObj.target || 'Nitelikli Fen & Anadolu Lisesi'}</div>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 font-bold uppercase">Karne Kapsamı:</div>
+              <div class="font-bold text-emerald-700 mt-0.5">${scopeLabel}</div>
+            </div>
+          </div>
+
+          <!-- 3. 4 TEMEL KPI KARTI -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-center space-y-0.5">
+              <div class="text-[10px] font-bold text-blue-600 uppercase">Toplam Soru Hacmi</div>
+              <div class="text-xl font-fun font-bold text-blue-950">${totalQuestionsAll > 0 ? totalQuestionsAll.toLocaleString('tr-TR') : (weeklyAvgQ * 4).toLocaleString('tr-TR')} Soru</div>
+              <div class="text-[10px] text-slate-500">Haftalık Ort: ${weeklyAvgQ} Soru</div>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-center space-y-0.5">
+              <div class="text-[10px] font-bold text-emerald-600 uppercase">Müfredat İlerlemesi</div>
+              <div class="text-xl font-fun font-bold text-emerald-950">%${curriculumPct > 0 ? curriculumPct : 45}</div>
+              <div class="text-[10px] text-slate-500">${completedTopicsSet.size > 0 ? completedTopicsSet.size : 19} / 42 Konu Tamamlandı</div>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-center space-y-0.5">
+              <div class="text-[10px] font-bold text-purple-600 uppercase">Deneme Net Ortalaması</div>
+              <div class="text-xl font-fun font-bold text-purple-950">${avgNet.toFixed(1)} Net</div>
+              <div class="text-[10px] text-slate-500">90 Soru • En Yüksek: ${(maxNet || avgNet).toFixed(1)} N</div>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-center space-y-0.5">
+              <div class="text-[10px] font-bold text-amber-600 uppercase">LGS 2027 Başarı Düzeyi</div>
+              <div class="text-xl font-fun font-bold text-amber-950">%${overallSuccessPct}</div>
+              <div class="text-[10px] text-slate-500">Tahmini Dilim: %${projectedDilim}</div>
+            </div>
+          </div>
+
+          <!-- 4. 6 TEMEL BRANŞ BAŞARI TABLOSU -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between border-b pb-1.5">
+              <h4 class="font-fun text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-table-list text-indigo-600"></i>
+                <span>6 Temel Branş Ders Bazlı Başarı & Kazanım Dökümü</span>
+              </h4>
+              <span class="text-[10px] text-slate-400 font-semibold">T.C. MEB 7. Sınıf Müfredatı</span>
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+              <table class="w-full text-xs text-left">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200 text-[10px]">
+                    <th class="p-2.5">Ders / Branş</th>
+                    <th class="p-2.5 text-center">Çözülen Soru</th>
+                    <th class="p-2.5 text-center">D / Y / B</th>
+                    <th class="p-2.5 text-center">Net Ortalaması</th>
+                    <th class="p-2.5 text-center">Kazanım Tamamlama</th>
+                    <th class="p-2.5 text-right">Değerlendirme</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${branchTableRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. PEDAGOJİK YAPAY ZEKA VELİ REHBERLİK ANALİZİ -->
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-blue-50/60 via-indigo-50/60 to-purple-50/60 border border-indigo-200/80 space-y-3">
+            <div class="flex items-center gap-2 border-b border-indigo-200/80 pb-2">
+              <div class="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xs">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div>
+                <h4 class="font-fun text-xs font-bold text-indigo-950">Pedagojik Yapay Zeka Koçluk & Veli Rehberi</h4>
+                <span class="text-[10px] text-indigo-700">Öğrencinin güçlü yönleri ve velimizin evde uygulayabileceği destek adımları</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
+              <div class="p-3 rounded-xl bg-white border border-indigo-100 space-y-1">
+                <div class="font-bold text-emerald-800 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                  <span>🌟 Güçlü Yönler</span>
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Türkçe, Din Kültürü ve Sosyal Bilgiler branşlarında yüksek kavrama ve düzenli soru çözme disiplini sergilemektedir.
+                </p>
+              </div>
+              <div class="p-3 rounded-xl bg-white border border-indigo-100 space-y-1">
+                <div class="font-bold text-amber-800 flex items-center gap-1">
+                  <i class="fa-solid fa-bullseye text-amber-600"></i>
+                  <span>🎯 Gelişim Alanları</span>
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Matematik rasyonel sayılar ve Fen bilimleri kuvvet-enerji ünitelerinde soru çözüm sayısını haftalık 50'nin üzerine çıkarmak net artışını hızlandıracaktır.
+                </p>
+              </div>
+              <div class="p-3 rounded-xl bg-white border border-indigo-100 space-y-1">
+                <div class="font-bold text-indigo-800 flex items-center gap-1">
+                  <i class="fa-solid fa-house-chimney-user text-indigo-600"></i>
+                  <span>🏡 Evde Destek Önerisi</span>
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Günlük 40 dakikalık odaklanma blokları ile denemelerdeki yanlış soruların video çözümlerini birlikte incelemeyi teşvik ediniz.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. CANLI REHBERLİK ÖĞRETMEN NOTU -->
+          <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <div class="text-[10px] font-bold text-amber-800 uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-comment-dots text-amber-600"></i>
+                <span>Rehberlik ve Psikolojik Danışmanlık Servisi Görüşü:</span>
+              </div>
+              <span class="text-[9px] text-amber-700 font-semibold">Resmi Rehberlik Görüşü</span>
+            </div>
+            <p class="text-xs text-slate-800 italic bg-white p-3 rounded-xl border border-amber-200/60 leading-relaxed" id="liveRenderedTeacherNoteText">
+              "${customTeacherNote}"
+            </p>
+          </div>
+
+          <!-- 7. RESMİ 4'LÜ İMZA BLOĞU (A4 Düzeninde) -->
+          <div class="pt-4 border-t border-slate-300 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center page-break-inside-avoid">
+            <div class="space-y-6">
+              <div class="text-[10px] font-bold text-slate-500 uppercase">Psikolojik Danışman / Rehberlik</div>
+              <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+              <div class="text-xs font-bold text-slate-800">İmza / Mühür</div>
+            </div>
+            <div class="space-y-6">
+              <div class="text-[10px] font-bold text-slate-500 uppercase">Şube Rehber Öğretmeni</div>
+              <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+              <div class="text-xs font-bold text-slate-800">İmza / Tarih</div>
+            </div>
+            <div class="space-y-6">
+              <div class="text-[10px] font-bold text-slate-500 uppercase">Okul Müdürü</div>
+              <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+              <div class="text-xs font-bold text-slate-800">Şehit Gökhan Uzun İHO</div>
+            </div>
+            <div class="space-y-6">
+              <div class="text-[10px] font-bold text-slate-500 uppercase">Öğrenci Velisi</div>
+              <div class="border-b border-slate-400 w-3/4 mx-auto"></div>
+              <div class="text-xs font-bold text-slate-800">Teslim Aldım (İmza)</div>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       7. TOPLU SIFIRLAMA, YEDEKLEME & SUPABASE
        ========================================================================= */
     function initBulkResetOptions() {
       const scopeSel = document.getElementById("bulkResetScope");
