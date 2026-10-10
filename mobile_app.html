@@ -917,6 +917,7 @@
     }
 
     function initMobile() {
+      // 1. Yerel veriyi kontrol et
       let savedStudent = null;
       try {
         const raw = localStorage.getItem(CURRENT_STUDENT_KEY);
@@ -932,6 +933,21 @@
         } else {
           openMobileStudentEntryModal();
         }
+      }
+
+      // 2. Supabase Merkezi Havuzundan öğrencileri ve çalışma verilerini senkronize et
+      if (typeof syncCentralStudentsWithCloud === "function") {
+        syncCentralStudentsWithCloud().then(cloudStudents => {
+          if (Array.isArray(cloudStudents) && cloudStudents.length > 0) {
+            renderMobileQuickStudentsList();
+            // Eğer geçerli öğrenci yoksa buluttaki ilk öğrenciyi seç
+            if (!currentStudent || !currentStudent.name) {
+              loginMobileStudent(cloudStudents[0].name, cloudStudents[0].avatar || '🌟', false);
+            }
+          }
+        }).catch(err => {
+          console.warn("[Mobile Sync Hatası]:", err);
+        });
       }
     }
 

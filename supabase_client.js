@@ -596,6 +596,38 @@ async function fetchAllStudentRecordsFromSupabase() {
 }
 
 /**
+ * Hem merkezi öğrenci listesini hem de tüm öğrencilerin detaylı çalışma verilerini
+ * doğrudan Supabase bulut havuzundan çeker ve yerel depolamaya senkronize eder.
+ */
+async function syncAllStudentsDataFromCloud() {
+  // 1. Merkezi Öğrenci Listesini Buluttan Çek
+  const centralStudents = await syncCentralStudentsWithCloud();
+
+  // 2. Tüm Öğrencilerin Çalışma Verilerini Buluttan Çek
+  const recordsRes = await fetchAllStudentRecordsFromSupabase();
+  if (recordsRes.success && Array.isArray(recordsRes.records)) {
+    recordsRes.records.forEach(rec => {
+      if (rec && rec.student_name && rec.state_data) {
+        const slug = (rec.student_name || '')
+          .toLocaleLowerCase('tr-TR')
+          .replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/i̇/g, 'i')
+          .replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u')
+          .replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+        const key = `fen_haftalik_data_${slug || 'ogrenci'}`;
+        try {
+          localStorage.setItem(key, JSON.stringify(rec.state_data));
+        } catch(e) {}
+      }
+    });
+  }
+
+  return {
+    students: centralStudents,
+    recordsCount: (recordsRes.records || []).length
+  };
+}
+
+/**
  * Eski versiyon veya çerez kalıntısı öğrenci verilerini temizler.
  */
 function purgeLegacyStudentStorage() {

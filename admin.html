@@ -1168,8 +1168,25 @@
       testAdminSupabaseConnection(false);
       renderAdminUsersTab();
 
-      // Buluttan merkezi havuzu otomatik eşitle
-      if (typeof syncCentralStudentsWithCloud === "function") {
+      // Buluttan merkezi havuzu ve tüm öğrenci çalışma/soru/net verilerini otomatik eşitle
+      if (typeof syncAllStudentsDataFromCloud === "function") {
+        syncAllStudentsDataFromCloud().then(result => {
+          const synced = result && result.students;
+          if (Array.isArray(synced)) {
+            if (!inspectedStudentName && synced.length > 0) {
+              inspectedStudentName = synced[0].name;
+            } else if (synced.length === 0) {
+              inspectedStudentName = "";
+            }
+            updateStudentSelectorDropdown();
+            renderDashboardOverview();
+            renderAdminUsersTab();
+            renderAiCoachAnalysis(adminActiveWeek);
+          }
+        }).catch(err => {
+          console.warn("[Admin Sync Hatası]:", err);
+        });
+      } else if (typeof syncCentralStudentsWithCloud === "function") {
         syncCentralStudentsWithCloud().then(synced => {
           if (Array.isArray(synced)) {
             if (!inspectedStudentName && synced.length > 0) {

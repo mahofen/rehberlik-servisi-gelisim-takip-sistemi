@@ -562,11 +562,13 @@
       updateRegisteredStudentsUI();
     }
 
-    function handleStudentLoginSubmit() {
+    async function handleStudentLoginSubmit() {
       const userInput = document.getElementById("loginStudentUsername");
       const passInput = document.getElementById("loginStudentPassword");
       const alertBox = document.getElementById("studentLoginAlert");
       const alertText = document.getElementById("studentLoginAlertText");
+      const submitBtn = document.querySelector("#studentLoginForm button[type='submit']");
+      const originalBtnHTML = submitBtn ? submitBtn.innerHTML : "";
 
       const enteredUser = (userInput?.value || "").trim();
       const enteredPass = (passInput?.value || "").trim();
@@ -589,37 +591,86 @@
         return;
       }
 
-      const students = getRegisteredStudents();
-      const student = students.find(s => {
-        const u = (s.username || s.name || "").toLocaleLowerCase('tr-TR').trim();
-        const n = (s.name || "").toLocaleLowerCase('tr-TR').trim();
-        const target = enteredUser.toLocaleLowerCase('tr-TR');
-        return u === target || n === target;
-      });
-
-      if (!student) {
-        if (alertBox && alertText) {
-          alertText.textContent = `"${enteredUser}" adında bir öğrenci bulunamadı. Lütfen adınızı kontrol edin veya yeni kayıt olun.`;
-          alertBox.classList.remove("hidden");
-        }
-        return;
+      // Buton yükleniyor durumu
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-300"></i> <span>Bulut Havuzundan Doğrulanıyor...</span>`;
       }
 
-      // Şifre kontrolü (varsayılan: 1234)
-      const expectedPass = (student.password || "1234").trim();
-      if (enteredPass !== expectedPass) {
-        if (alertBox && alertText) {
-          alertText.textContent = "Girdiğiniz şifre hatalı! (Varsayılan şifre: 1234). Şifrenizi unuttuysanız öğretmeninizden sıfırlama isteyebilirsiniz.";
-          alertBox.classList.remove("hidden");
+      try {
+        // 1. Supabase Merkezi Havuzundan en güncel öğrenci ve şifre listesini çek
+        let students = getRegisteredStudents();
+        if (typeof syncCentralStudentsWithCloud === "function") {
+          try {
+            const cloudStudents = await syncCentralStudentsWithCloud(students);
+            if (Array.isArray(cloudStudents)) {
+              students = cloudStudents;
+              updateRegisteredStudentsUI();
+            }
+          } catch(e) {
+            console.warn("[Login Sync] Bulut senkron uyarısı:", e);
+          }
         }
-        passInput?.focus();
-        passInput?.select();
-        return;
-      }
 
-      // Başarılı giriş
-      if (alertBox) alertBox.classList.add("hidden");
-      selectAndProceedStudent(student);
+        const student = students.find(s => {
+          const u = (s.username || s.name || "").toLocaleLowerCase('tr-TR').trim();
+          const n = (s.name || "").toLocaleLowerCase('tr-TR').trim();
+          const target = enteredUser.toLocaleLowerCase('tr-TR');
+          return u === target || n === target;
+        });
+
+        if (!student) {
+          if (alertBox && alertText) {
+            alertText.textContent = `"${enteredUser}" adında bir öğrenci bulunamadı. Lütfen adınızı kontrol edin veya yeni kayıt oluşturun.`;
+            alertBox.classList.remove("hidden");
+          }
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHTML;
+          }
+          return;
+        }
+
+        // Şifre kontrolü (varsayılan: 1234)
+        const expectedPass = (student.password || "1234").trim();
+        if (enteredPass !== expectedPass) {
+          if (alertBox && alertText) {
+            alertText.textContent = "Girdiğiniz şifre hatalı! Şifrenizi unuttuysanız öğretmeninizden / yöneticiden sıfırlama isteyebilirsiniz.";
+            alertBox.classList.remove("hidden");
+          }
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHTML;
+          }
+          passInput?.focus();
+          passInput?.select();
+          return;
+        }
+
+        // 2. Öğrencinin soru ve çalışma verilerini doğrudan Supabase'den çek
+        if (typeof fetchStudentFromSupabase === "function") {
+          try {
+            submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down fa-bounce text-sky-300"></i> <span>Verileriniz Buluttan Yükleniyor...</span>`;
+            const cloudDataRes = await fetchStudentFromSupabase(student.name);
+            if (cloudDataRes.success && cloudDataRes.data) {
+              const storageKey = getUserDataStorageKey(student.name);
+              localStorage.setItem(storageKey, JSON.stringify(cloudDataRes.data));
+            }
+          } catch(e) {
+            console.warn("[Login Fetch] Öğrenci çalışma verisi getirme uyarısı:", e);
+          }
+        }
+
+        // Başarılı giriş
+        if (alertBox) alertBox.classList.add("hidden");
+        selectAndProceedStudent(student);
+      } catch(err) {
+        console.error("Giriş işlemi hatası:", err);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHTML;
+        }
+      }
     }
 
     async function handleStudentRegisterSubmit() {
