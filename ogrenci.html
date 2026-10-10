@@ -432,9 +432,9 @@
     </section>
 
     <!-- 3. HAFTA SONU GENEL DENEME SINAVI (7. SINIF TÜM BRANŞLAR - 20'ŞER SORU) -->
-    <section class="bg-white rounded-3xl p-5 sm:p-6 shadow-fun border-2 border-indigo-200">
+    <section class="bg-white rounded-3xl p-5 sm:p-6 shadow-fun border-2 border-indigo-200 space-y-5">
       
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-5 pb-4 border-b border-indigo-100">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-4 border-b border-indigo-100">
         <div>
           <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 text-xs font-bold mb-1">
             <i class="fa-solid fa-file-signature text-indigo-600"></i> 7. SINIF HAFTA SONU GENEL DENEME SINAVI
@@ -443,7 +443,7 @@
             Hafta Sonu 7. Sınıf Deneme Sınavı (Toplam 90 Soru)
           </h3>
           <p class="text-xs text-slate-500 mt-0.5">
-            Türkçe, Matematik, Fen Bilimleri (20'şer Soru) & Sosyal Bilgiler, Din Kültürü, İngilizce (10'ar Soru / Toplam 90 Soru).
+            Türkçe (20), Matematik (20), Fen (20), Sosyal (10), Din (10), İngilizce (10). Sonuçları kaydettikten sonra form yeni deneme için sıfırlanır.
           </p>
         </div>
 
@@ -461,19 +461,43 @@
         </div>
       </div>
 
+      <!-- Deneme Adı / Yayın Başlığı Input -->
+      <div class="flex flex-col sm:flex-row items-center gap-3 bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100">
+        <div class="flex items-center gap-2 text-xs font-bold text-indigo-900 shrink-0">
+          <i class="fa-solid fa-pen-clip text-indigo-600"></i>
+          <span>Deneme Sınavı Adı / Yayını:</span>
+        </div>
+        <input type="text" id="denemeTitleInput" placeholder="Örn: 1. Kurumsal LGS Denemesi, MEB Kazanım Değerlendirme..." class="flex-1 w-full px-3.5 py-2 rounded-xl bg-white border border-indigo-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-300">
+      </div>
+
       <!-- 6 Branş Deneme Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="denemeSubjectsGrid">
         <!-- JS ile 6 branş kartı (Türkçe, Matematik, Fen, Sosyal Bilgiler, Din, İngilizce) -->
       </div>
 
-      <!-- Deneme Değerlendirme Notu -->
-      <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <!-- Deneme Değerlendirme Notu & Kaydet Butonu -->
+      <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="w-full sm:flex-1">
           <input type="text" id="denemeNoteInput" placeholder="Deneme analizi & yorumun (Örn: Sosyal ve Türkçe tam, matematikte 2 boş)..." class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:outline-none">
         </div>
-        <button onclick="saveWeekDenemeResults()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-fun font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 shrink-0">
-          <i class="fa-solid fa-floppy-disk"></i> Deneme Sonuçlarını Kaydet
+        <button onclick="saveWeekDenemeResults()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-fun font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer tap-bounce">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>Deneme Sonucunu Kaydet 🚀</span>
         </button>
+      </div>
+
+      <!-- YENİ: Kayıtlı Deneme Sınavları Listesi (Alt Kısım) -->
+      <div class="mt-6 pt-5 border-t-2 border-dashed border-indigo-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="font-fun text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-indigo-600"></i>
+            <span>Bu Haftaya Kaydedilen Deneme Sınavları (<span id="denemeHistoryCount">0</span>)</span>
+          </h4>
+          <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">Kayıtlı Sonuçlar</span>
+        </div>
+        <div class="space-y-2.5" id="denemeHistoryListContainer">
+          <!-- JS ile doldurulacak deneme kartları -->
+        </div>
       </div>
 
     </section>
@@ -1684,6 +1708,7 @@
       return {
         days: daysObj,
         deneme: { conducted: false, subjects: denemeSubs, note: "" },
+        denemeHistory: [],
         weeklyReflection: ""
       };
     }
@@ -1701,6 +1726,9 @@
         state.weeksData[wNum] = createCleanWeekData();
       } else {
         const wData = state.weeksData[wNum];
+        if (!Array.isArray(wData.denemeHistory)) {
+          wData.denemeHistory = [];
+        }
         if (wData.days) {
           for (let d = 0; d < 7; d++) {
             if (wData.days[d]) {
@@ -2375,6 +2403,7 @@
       const wData = getOrCreateWeekData(state.selectedWeek);
       const deneme = wData.deneme || { subjects: [] };
       const grid = document.getElementById("denemeSubjectsGrid");
+      if (!grid) return;
       grid.innerHTML = "";
 
       let totalCorrect = 0;
@@ -2437,15 +2466,102 @@
         grid.appendChild(card);
       });
 
-      document.getElementById("denemeTotalNetDisplay").textContent = `${grandTotalNet.toFixed(2)} Net`;
-      document.getElementById("headerWeekDenemeNet").textContent = `${grandTotalNet.toFixed(2)} Net`;
-      document.getElementById("bannerWeekDenemeScore").textContent = `${grandTotalNet.toFixed(2)} / 90`;
-      document.getElementById("denemeCorrectWrongRatio").textContent = `${totalCorrect} D / ${totalIncorrect} Y / ${totalEmpty} B`;
+      const displayNet = document.getElementById("denemeTotalNetDisplay");
+      if (displayNet) displayNet.textContent = `${grandTotalNet.toFixed(2)} Net`;
+      const ratioDisplay = document.getElementById("denemeCorrectWrongRatio");
+      if (ratioDisplay) ratioDisplay.textContent = `${totalCorrect} D / ${totalIncorrect} Y / ${totalEmpty} B`;
       
       const successPct = Math.round((grandTotalNet / 90) * 100);
-      document.getElementById("denemeSuccessRateBadge").textContent = `%${Math.max(0, successPct)} Başarı`;
+      const rateBadge = document.getElementById("denemeSuccessRateBadge");
+      if (rateBadge) rateBadge.textContent = `%${Math.max(0, successPct)} Başarı`;
 
-      document.getElementById("denemeNoteInput").value = deneme.note || "";
+      renderDenemeHistoryList();
+    }
+
+    function renderDenemeHistoryList() {
+      const wData = getOrCreateWeekData(state.selectedWeek);
+      const history = wData.denemeHistory || [];
+      const container = document.getElementById("denemeHistoryListContainer");
+      const countBadge = document.getElementById("denemeHistoryCount");
+      
+      if (countBadge) countBadge.textContent = history.length;
+      if (!container) return;
+
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="p-5 rounded-2xl bg-indigo-50/40 border border-dashed border-indigo-200 text-center text-slate-500 text-xs space-y-1">
+            <i class="fa-solid fa-clipboard-list text-indigo-400 text-xl block mb-1"></i>
+            <div class="font-bold text-slate-700">Bu haftaya henüz kayıtlı deneme sınavı bulunmuyor.</div>
+            <p class="text-slate-400 text-[11px]">Yukarıdaki formdan derslerin doğru ve yanlış sayılarını girip <strong>"Deneme Sonucunu Kaydet 🚀"</strong> butonuna basınız.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      history.slice().reverse().forEach((item, revIdx) => {
+        const actualIdx = history.length - 1 - revIdx;
+        const card = document.createElement("div");
+        card.className = "p-4 rounded-2xl bg-white border border-slate-200 hover:border-indigo-300 shadow-xs transition-all space-y-3";
+        
+        let branchBadges = "";
+        (item.subjects || []).forEach(s => {
+          const netVal = typeof s.net === 'number' ? s.net.toFixed(2) : (s.net || '0.00');
+          branchBadges += `
+            <div class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] flex items-center justify-between">
+              <span class="font-bold text-slate-700 truncate mr-1">${s.subject.substring(0, 3)}:</span>
+              <span class="font-semibold text-slate-600">${s.correct}D ${s.incorrect}Y <strong class="text-indigo-600 font-bold ml-1">${netVal}N</strong></span>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-fun font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                #${actualIdx + 1}
+              </div>
+              <div class="min-w-0">
+                <h5 class="font-fun font-bold text-xs sm:text-sm text-slate-800 truncate">${item.title || 'Deneme Sınavı'}</h5>
+                <div class="text-[10px] text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
+                  <span><i class="fa-regular fa-clock"></i> ${item.date || ''}</span>
+                  <span>•</span>
+                  <span class="text-emerald-600 font-bold">${item.totalCorrect || 0} Doğru</span>
+                  <span>•</span>
+                  <span class="text-rose-600 font-bold">${item.totalIncorrect || 0} Yanlış</span>
+                  <span>•</span>
+                  <span class="text-slate-500">${item.totalEmpty || 0} Boş</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0">
+              <div class="text-left sm:text-right">
+                <div class="text-base font-fun font-bold text-indigo-700 leading-none">${(item.grandTotalNet || 0).toFixed(2)} Net</div>
+                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 mt-1 inline-block">
+                  %${item.successPct || Math.round(((item.grandTotalNet || 0) / 90) * 100)} Başarı
+                </span>
+              </div>
+              <button onclick="deleteDenemeHistoryItem(${actualIdx})" class="w-8 h-8 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer" title="Bu Deneme Sınavı Kaydını Sil">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            ${branchBadges}
+          </div>
+
+          ${item.note ? `
+            <div class="text-xs text-slate-700 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/70 flex items-start gap-2">
+              <i class="fa-solid fa-note-sticky text-amber-600 text-xs mt-0.5 shrink-0"></i>
+              <span class="italic font-medium">${item.note}</span>
+            </div>
+          ` : ''}
+        `;
+
+        container.appendChild(card);
+      });
     }
 
     function updateDenemeSubjectScore(idx, type, val) {
@@ -2474,11 +2590,107 @@
 
     function saveWeekDenemeResults() {
       const wData = getOrCreateWeekData(state.selectedWeek);
-      wData.deneme.note = document.getElementById("denemeNoteInput").value.trim();
+      const titleInput = document.getElementById("denemeTitleInput");
+      const noteInput = document.getElementById("denemeNoteInput");
+      
+      const currentHistoryCount = Array.isArray(wData.denemeHistory) ? wData.denemeHistory.length : 0;
+      const title = (titleInput ? titleInput.value.trim() : "") || `${currentHistoryCount + 1}. Deneme Sınavı`;
+      const note = noteInput ? noteInput.value.trim() : "";
+
+      let totalCorrect = 0;
+      let totalIncorrect = 0;
+      let totalEmpty = 0;
+      let grandTotalNet = 0;
+
+      (wData.deneme.subjects || []).forEach(sub => {
+        const maxQ = getSubjectMaxQuestions(sub.subject);
+        const c = Math.min(maxQ, Math.max(0, parseInt(sub.correct) || 0));
+        const inc = Math.min(maxQ - c, Math.max(0, parseInt(sub.incorrect) || 0));
+        const emp = Math.max(0, maxQ - (c + inc));
+        const rawNet = c - (inc / 3);
+        const net = Math.max(0, parseFloat(rawNet.toFixed(2)));
+
+        totalCorrect += c;
+        totalIncorrect += inc;
+        totalEmpty += emp;
+        grandTotalNet += net;
+      });
+
+      if (totalCorrect === 0 && totalIncorrect === 0) {
+        if (!confirm("Tüm branşlarda doğru ve yanlış sayısı 0 görünüyor. Bu denemeyi yine de kaydetmek istiyor musunuz?")) {
+          return;
+        }
+      }
+
+      const successPct = Math.round((grandTotalNet / 90) * 100);
+
+      const newDenemeEntry = {
+        id: 'deneme_' + Date.now(),
+        title: title,
+        date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        subjects: JSON.parse(JSON.stringify(wData.deneme.subjects)),
+        totalCorrect: totalCorrect,
+        totalIncorrect: totalIncorrect,
+        totalEmpty: totalEmpty,
+        grandTotalNet: parseFloat(grandTotalNet.toFixed(2)),
+        successPct: Math.max(0, successPct),
+        note: note
+      };
+
+      if (!Array.isArray(wData.denemeHistory)) {
+        wData.denemeHistory = [];
+      }
+      wData.denemeHistory.push(newDenemeEntry);
+
+      // Ana deneme özetini son kayda eşitle
+      wData.deneme.conducted = true;
+      wData.deneme.note = note;
+      wData.deneme.lastNet = parseFloat(grandTotalNet.toFixed(2));
+
+      // Yeni veri girişi için form inputlarını sıfırla (kullanıcı isteği: form boş gelsin)
+      wData.deneme.subjects.forEach(sub => {
+        const maxQ = getSubjectMaxQuestions(sub.subject);
+        sub.correct = 0;
+        sub.incorrect = 0;
+        sub.empty = maxQ;
+        sub.net = 0.00;
+      });
+
+      if (titleInput) titleInput.value = "";
+      if (noteInput) noteInput.value = "";
+
       saveState(true);
       playChimeSound('success');
       confetti({ particleCount: 60, spread: 70 });
-      alert("7. Sınıf deneme sonuçları kaydedildi ve buluta eşitlendi! 🎉");
+
+      renderDenemeGrid();
+      updateSummaryMetrics();
+
+      alert(`"${title}" (${grandTotalNet.toFixed(2)} Net) başarıyla kaydedildi!\nSonuçlar alt listede görüntülendi ve yeni deneme girişi için form sıfırlandı. 🎉`);
+    }
+
+    function deleteDenemeHistoryItem(index) {
+      const wData = getOrCreateWeekData(state.selectedWeek);
+      if (!Array.isArray(wData.denemeHistory) || !wData.denemeHistory[index]) return;
+
+      const itemTitle = wData.denemeHistory[index].title || 'Bu deneme';
+      if (!confirm(`"${itemTitle}" sınav kaydını silmek istediğinizden emin misiniz?`)) {
+        return;
+      }
+
+      wData.denemeHistory.splice(index, 1);
+      if (wData.denemeHistory.length === 0) {
+        wData.deneme.conducted = false;
+        wData.deneme.lastNet = 0;
+      } else {
+        const latest = wData.denemeHistory[wData.denemeHistory.length - 1];
+        wData.deneme.lastNet = latest.grandTotalNet || 0;
+      }
+
+      saveState(true);
+      playChimeSound('click');
+      renderDenemeHistoryList();
+      updateSummaryMetrics();
     }
 
     function saveWeeklyReflection() {
@@ -2582,24 +2794,37 @@
 
       let denemeTotalQ = 0;
       let grandNet = 0;
-      (wData.deneme.subjects || []).forEach(s => {
-        denemeTotalQ += (s.correct || 0) + (s.incorrect || 0);
-        grandNet += (s.net || 0);
-      });
+
+      if (Array.isArray(wData.denemeHistory) && wData.denemeHistory.length > 0) {
+        const latest = wData.denemeHistory[wData.denemeHistory.length - 1];
+        grandNet = typeof latest.grandTotalNet === 'number' ? latest.grandTotalNet : (parseFloat(latest.grandTotalNet) || 0);
+        denemeTotalQ = (latest.totalCorrect || 0) + (latest.totalIncorrect || 0);
+      } else {
+        (wData.deneme?.subjects || []).forEach(s => {
+          denemeTotalQ += (s.correct || 0) + (s.incorrect || 0);
+          grandNet += (s.net || 0);
+        });
+      }
 
       const grandTotalQuestionsThisWeek = weekTotalQ + denemeTotalQ;
 
-      document.getElementById("bannerWeekTopicsRatio").textContent = `${weekTopicsDone} / 42`;
-      document.getElementById("bannerWeekTotalQuestions").textContent = `${grandTotalQuestionsThisWeek}`;
+      const ratioBadge = document.getElementById("bannerWeekTopicsRatio");
+      if (ratioBadge) ratioBadge.textContent = `${weekTopicsDone} / 42`;
+      const bannerQ = document.getElementById("bannerWeekTotalQuestions");
+      if (bannerQ) bannerQ.textContent = `${grandTotalQuestionsThisWeek}`;
       const hwQ = document.getElementById("headerWeekQuestionCount");
       if (hwQ) hwQ.textContent = `${grandTotalQuestionsThisWeek} Soru`;
       const hwN = document.getElementById("headerWeekDenemeNet");
       if (hwN) hwN.textContent = `${grandNet.toFixed(2)} Net`;
 
-      document.getElementById("karnеTopicsCount").textContent = `${weekTopicsDone} / 42`;
-      document.getElementById("karneQuestionsCount").textContent = `${grandTotalQuestionsThisWeek} Soru`;
-      document.getElementById("karneDenemeNet").textContent = `${grandNet.toFixed(2)} Net`;
-      document.getElementById("weeklyReflectionText").value = wData.weeklyReflection || "";
+      const kTop = document.getElementById("karnеTopicsCount");
+      if (kTop) kTop.textContent = `${weekTopicsDone} / 42`;
+      const kQ = document.getElementById("karneQuestionsCount");
+      if (kQ) kQ.textContent = `${grandTotalQuestionsThisWeek} Soru`;
+      const kN = document.getElementById("karneDenemeNet");
+      if (kN) kN.textContent = `${grandNet.toFixed(2)} Net`;
+      const refText = document.getElementById("weeklyReflectionText");
+      if (refText) refText.value = wData.weeklyReflection || "";
 
       renderWeeklyCharts();
     }
