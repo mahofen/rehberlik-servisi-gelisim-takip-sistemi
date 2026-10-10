@@ -227,22 +227,54 @@
         </div>
 
         <!-- Tüm Kayıtlı Öğrenciler Tablosu -->
+        <!-- Tüm Kayıtlı Öğrenciler Tablosu & 40 Haftalık Matris -->
         <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-3">
             <div>
-              <h3 class="font-fun text-base font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-users text-blue-600"></i>
-                <span>Tüm Kayıtlı Öğrencilerin Haftalık Gelişim Tablosu</span>
-              </h3>
-              <p class="text-xs text-slate-500">Seçili haftadaki konu tamamlanma, soru sayısı ve 90 soruluk deneme sınavı netleri</p>
+              <div class="flex items-center gap-2">
+                <h3 class="font-fun text-base font-bold text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-users text-blue-600"></i>
+                  <span id="adminOverviewTableTitle">Tüm Kayıtlı Öğrencilerin Gelişim Tablosu</span>
+                </h3>
+                <span id="adminOverviewScopeBadge" class="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold border border-indigo-200">
+                  🌟 Tüm 40 Hafta (Genel)
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5" id="adminOverviewTableSub">
+                Tüm 40 haftadaki toplam çözülen soru sayıları, tamamlanan konu kazanımları ve 90 soruluk LGS deneme netleri
+              </p>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="handleSyncAllFromCloud(true)" id="adminCloudRefreshBtn" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer tap-bounce" title="Tüm verileri Supabase ortak havuzundan canlı yenile">
+
+            <!-- Görünüm Seçici & Aksiyonlar -->
+            <div class="flex items-center flex-wrap gap-2">
+              <!-- Liste vs 40 Hafta Matrisi Butonları -->
+              <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                <button onclick="setOverviewViewMode('list')" id="btnViewModeList" class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer">
+                  <i class="fa-solid fa-list-check text-blue-600"></i>
+                  <span>Öğrenci Listesi</span>
+                </button>
+                <button onclick="setOverviewViewMode('matrix')" id="btnViewModeMatrix" class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer">
+                  <i class="fa-solid fa-table-cells text-indigo-600"></i>
+                  <span>🗓️ 40 Haftalık Sınıf Matrisi</span>
+                </button>
+              </div>
+
+              <!-- Hızlı Tüm Haftalar / Seçili Hafta Butonu -->
+              <div class="flex items-center bg-indigo-50 border border-indigo-200 p-1 rounded-2xl">
+                <button onclick="changeAdminWeek('ALL')" id="btnScopeAllWeeks" class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-xs cursor-pointer">
+                  🌟 Tüm 40 Hafta
+                </button>
+                <button onclick="changeAdminWeek(1)" id="btnScopeSingleWeek" class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all text-indigo-700 hover:bg-indigo-100 cursor-pointer">
+                  📅 Hafta Bazlı
+                </button>
+              </div>
+
+              <button onclick="handleSyncAllFromCloud(true)" id="adminCloudRefreshBtn" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer tap-bounce" title="Tüm verileri Supabase ortak havuzundan canlı yenile">
                 <i class="fa-solid fa-arrows-rotate" id="adminCloudRefreshIcon"></i>
-                <span>☁️ Ortak Havuzu Yenile</span>
+                <span class="hidden sm:inline">☁️ Havuzu Yenile</span>
               </button>
               <a href="index.html" class="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 hover:bg-blue-100 flex items-center gap-1.5 transition-colors">
-                <i class="fa-solid fa-user-plus text-xs"></i> Yeni Öğrenci Ekle
+                <i class="fa-solid fa-user-plus text-xs"></i> Yeni Öğrenci
               </a>
             </div>
           </div>
@@ -285,20 +317,37 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
+          <!-- GÖRÜNÜM 1: STANDART ÖĞRENCİ LİSTESİ TABLOSU -->
+          <div id="adminListViewContainer" class="overflow-x-auto">
             <table class="w-full text-xs text-left">
               <thead>
                 <tr class="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
                   <th class="p-3">Öğrenci Bilgisi</th>
-                  <th class="p-3 text-center">Tamamlanan Konu (Hafta)</th>
-                  <th class="p-3 text-center">Çözülen Soru</th>
-                  <th class="p-3 text-center">Deneme Neti (90 Soru)</th>
-                  <th class="p-3 text-center">Başarı Oranı</th>
+                  <th class="p-3 text-center" id="thTopicsCol">Tamamlanan Konu</th>
+                  <th class="p-3 text-center" id="thQuestionsCol">Çözülen Soru</th>
+                  <th class="p-3 text-center" id="thDenemeCol">Deneme Neti (90 Soru)</th>
+                  <th class="p-3 text-center" id="thSuccessCol">Başarı Oranı</th>
                   <th class="p-3 text-right">Yönetim & Eylemler</th>
                 </tr>
               </thead>
               <tbody id="adminStudentsTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
             </table>
+          </div>
+
+          <!-- GÖRÜNÜM 2: 40 HAFTALIK TÜM SINIF KARŞILAŞTIRMA MATRİSİ -->
+          <div id="adminMatrixViewContainer" class="hidden overflow-x-auto space-y-3">
+            <div class="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-200 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2 text-indigo-950 font-bold">
+                <i class="fa-solid fa-table text-indigo-600"></i>
+                <span>Tüm Sınıfın 40 Haftalık Soru Çözümü ve Deneme Neti Karşılaştırma Matrisi</span>
+              </div>
+              <span class="text-[10px] text-indigo-700 bg-white px-2 py-0.5 rounded-lg border border-indigo-200 font-semibold">Hücre formatı: Soru Sayısı | Net</span>
+            </div>
+            <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-[600px] overflow-y-auto">
+              <table class="w-full text-xs text-left border-collapse" id="adminClassMatrixTable">
+                <!-- JS ile dinamik matris tablosu render edilir -->
+              </table>
+            </div>
           </div>
         </div>
 
@@ -1137,7 +1186,8 @@
       }
     })();
 
-    let adminActiveWeek = 1;
+    let adminActiveWeek = "ALL"; // "ALL" (Tüm 40 Hafta Kümülatif) veya 1..40 (Tekil Hafta)
+    let adminOverviewViewMode = 'list'; // 'list' (Öğrenci Listesi) veya 'matrix' (40 Haftalık Sınıf Matrisi)
     let inspectedStudentName = "";
     let aiNetForecastChartInstance = null;
     let aiSubjectRadarChartInstance = null;
@@ -1274,19 +1324,110 @@
       };
     }
 
+    // 40 Haftalık Kümülatif & Kapsamlı Özet Hesaplayıcı
+    function getStudentAggregatedSummary(studentName, weekScope = 'ALL') {
+      if (weekScope !== 'ALL' && typeof weekScope !== 'undefined') {
+        const singleW = calculateStudentWeekSummary(studentName, parseInt(weekScope));
+        return {
+          scope: 'SINGLE',
+          weekNum: parseInt(weekScope),
+          topicsDone: singleW.topicsDone,
+          totalQuestions: singleW.totalQuestions,
+          denemeNet: singleW.denemeNet,
+          maxDenemeNet: singleW.denemeNet,
+          denemeCount: singleW.denemeCount,
+          denemeHistory: singleW.denemeHistory,
+          reflection: singleW.reflection,
+          hasActivity: (singleW.totalQuestions > 0 || singleW.topicsDone > 0 || singleW.denemeNet > 0 || singleW.denemeCount > 0)
+        };
+      }
+
+      let uData = null;
+      try { uData = JSON.parse(localStorage.getItem(getUserDataStorageKey(studentName))); } catch(e) {}
+      const weeksData = uData?.weeksData || {};
+
+      let totalQuestions = 0;
+      const completedTopicsSet = new Set();
+      const allDenemeHistory = [];
+      let totalDenemeNetSum = 0;
+      let maxDenemeNet = 0;
+      let activeWeeksCount = 0;
+      const weeklyBreakdown = [];
+
+      for (let w = 1; w <= 40; w++) {
+        const wRec = weeksData[w];
+        const wSummary = calculateStudentWeekSummary(studentName, w);
+        weeklyBreakdown.push({
+          weekNumber: w,
+          weekObj: ALL_WEEKS[w - 1] || { label: `${w}. Hafta` },
+          topicsDone: wSummary.topicsDone,
+          totalQuestions: wSummary.totalQuestions,
+          denemeNet: wSummary.denemeNet,
+          denemeCount: wSummary.denemeCount,
+          denemeHistory: wSummary.denemeHistory,
+          reflection: wSummary.reflection,
+          hasActivity: (wSummary.totalQuestions > 0 || wSummary.topicsDone > 0 || wSummary.denemeNet > 0 || wSummary.denemeCount > 0)
+        });
+
+        totalQuestions += wSummary.totalQuestions;
+        if (wSummary.totalQuestions > 0 || wSummary.topicsDone > 0 || wSummary.denemeNet > 0 || wSummary.denemeCount > 0) {
+          activeWeeksCount++;
+        }
+
+        if (wRec && wRec.days) {
+          for (let d = 0; d < 7; d++) {
+            (wRec.days[d]?.topics || []).forEach(t => {
+              if (t.done) completedTopicsSet.add(t.name);
+            });
+          }
+        }
+
+        const dHist = wSummary.denemeHistory || [];
+        dHist.forEach(dItem => {
+          allDenemeHistory.push({ ...dItem, weekNum: w });
+          const dNet = typeof dItem.grandTotalNet === 'number' ? dItem.grandTotalNet : (parseFloat(dItem.grandTotalNet) || 0);
+          totalDenemeNetSum += dNet;
+          if (dNet > maxDenemeNet) maxDenemeNet = dNet;
+        });
+      }
+
+      const totalDenemes = allDenemeHistory.length;
+      const avgDenemeNet = totalDenemes > 0 ? parseFloat((totalDenemeNetSum / totalDenemes).toFixed(2)) : 0;
+
+      return {
+        scope: 'ALL',
+        topicsDone: completedTopicsSet.size,
+        totalQuestions,
+        denemeNet: avgDenemeNet,
+        maxDenemeNet: parseFloat(maxDenemeNet.toFixed(2)),
+        denemeCount: totalDenemes,
+        denemeHistory: allDenemeHistory,
+        activeWeeksCount,
+        weeklyBreakdown,
+        hasActivity: (totalQuestions > 0 || completedTopicsSet.size > 0 || totalDenemes > 0)
+      };
+    }
+
     /* =========================================================================
        4. YÖNETİCİ DASHBOARD BAŞLATMA & SEKMELER
        ========================================================================= */
     function initAdminDashboard() {
-      // Hafta seçiciyi doldur
+      // Hafta seçici dropdown'u doldur (Tüm 40 Hafta + 1..40 Hafta)
       const sel = document.getElementById("adminWeekSelector");
-      if (sel && sel.options.length === 0) {
+      if (sel) {
+        sel.innerHTML = "";
+        const allOpt = document.createElement("option");
+        allOpt.value = "ALL";
+        allOpt.textContent = "🌟 Tüm 40 Hafta (Genel Süreç Görünümü)";
+        sel.appendChild(allOpt);
+
         ALL_WEEKS.forEach(w => {
           const opt = document.createElement("option");
           opt.value = w.weekNumber;
           opt.textContent = w.label;
           sel.appendChild(opt);
         });
+        sel.value = adminActiveWeek;
       }
 
       // Aktif öğrenciyi belirle
@@ -1322,7 +1463,7 @@
             updateStudentSelectorDropdown();
             renderDashboardOverview();
             renderAdminUsersTab();
-            renderAiCoachAnalysis(adminActiveWeek);
+            renderAiCoachAnalysis(adminActiveWeek === 'ALL' ? 1 : adminActiveWeek);
           }
         }).catch(err => {
           console.warn("[Admin Sync Hatası]:", err);
@@ -1360,7 +1501,7 @@
           renderDashboardOverview();
           renderAdminUsersTab();
           if (typeof renderAiCoachAnalysis === "function") {
-            renderAiCoachAnalysis(adminActiveWeek);
+            renderAiCoachAnalysis(adminActiveWeek === 'ALL' ? 1 : adminActiveWeek);
           }
           if (showAlert) {
             alert(`☁️ Ortak havuz başarıyla eşitlendi!\n• Toplam Kayıtlı Öğrenci: ${count}\n• Buluttan İndirilen Çalışma Kaydı: ${recs}\nTüm cihazlardan girilen soru ve deneme verileri tek sayfada güncellendi. ✓`);
@@ -1385,11 +1526,62 @@
     let reportCardCustomTeacherNote = "";
 
     function changeAdminWeek(wNum) {
-      adminActiveWeek = parseInt(wNum);
+      if (wNum === 'ALL' || wNum === 'all') {
+        adminActiveWeek = 'ALL';
+      } else {
+        adminActiveWeek = parseInt(wNum) || 1;
+      }
+
+      const sel = document.getElementById("adminWeekSelector");
+      if (sel) sel.value = adminActiveWeek;
+
+      // Hızlı Butonların Aktiflik Durumunu Güncelle
+      const btnAll = document.getElementById("btnScopeAllWeeks");
+      const btnSingle = document.getElementById("btnScopeSingleWeek");
+      if (btnAll && btnSingle) {
+        if (adminActiveWeek === 'ALL') {
+          btnAll.className = "px-2.5 py-1 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-xs cursor-pointer";
+          btnSingle.className = "px-2.5 py-1 rounded-xl text-xs font-bold transition-all text-indigo-700 hover:bg-indigo-100 cursor-pointer";
+        } else {
+          btnAll.className = "px-2.5 py-1 rounded-xl text-xs font-bold transition-all text-indigo-700 hover:bg-indigo-100 cursor-pointer";
+          btnSingle.className = "px-2.5 py-1 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-xs cursor-pointer";
+          btnSingle.textContent = `📅 ${adminActiveWeek}. Hafta`;
+        }
+      }
+
       renderDashboardOverview();
-      renderAiCoachAnalysis(adminActiveWeek);
+      renderAiCoachAnalysis(adminActiveWeek === 'ALL' ? 1 : adminActiveWeek);
       if (document.getElementById("adminTab-reportcard") && !document.getElementById("adminTab-reportcard").classList.contains("hidden")) {
         renderParentReportCard();
+      }
+    }
+
+    function setOverviewViewMode(mode) {
+      adminOverviewViewMode = mode;
+      const btnList = document.getElementById("btnViewModeList");
+      const btnMatrix = document.getElementById("btnViewModeMatrix");
+      const contList = document.getElementById("adminListViewContainer");
+      const contMatrix = document.getElementById("adminMatrixViewContainer");
+
+      if (mode === 'matrix') {
+        if (btnList) btnList.className = "px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer";
+        if (btnMatrix) btnMatrix.className = "px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer";
+        if (contList) contList.classList.add("hidden");
+        if (contMatrix) contMatrix.classList.remove("hidden");
+      } else {
+        if (btnList) btnList.className = "px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer";
+        if (btnMatrix) btnMatrix.className = "px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer";
+        if (contList) contList.classList.remove("hidden");
+        if (contMatrix) contMatrix.classList.add("hidden");
+      }
+      renderDashboardOverview();
+    }
+
+    function openStudent40WeeksMatrix(studentName) {
+      selectStudentToInspect(studentName);
+      const refCont = document.getElementById("adminReflectionsContainer");
+      if (refCont) {
+        refCont.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
 
@@ -1408,7 +1600,7 @@
       if (activeBtn) activeBtn.className = "pb-3 text-blue-600 border-b-2 border-blue-600 flex items-center gap-1.5 font-bold transition-colors shrink-0 cursor-pointer";
 
       if (tId === 'aicoach') {
-        renderAiCoachAnalysis(adminActiveWeek);
+        renderAiCoachAnalysis(adminActiveWeek === 'ALL' ? 1 : adminActiveWeek);
       } else if (tId === 'reportcard') {
         renderParentReportCard();
       } else if (tId === 'supabase') {
@@ -1460,7 +1652,7 @@
         const opt = document.createElement("option");
         opt.value = w.weekNumber;
         opt.textContent = `${w.weekNumber}. Hafta`;
-        if (w.weekNumber === adminActiveWeek) opt.selected = true;
+        if (w.weekNumber === (adminActiveWeek === 'ALL' ? 1 : adminActiveWeek)) opt.selected = true;
         sel.appendChild(opt);
       });
     }
@@ -1487,9 +1679,10 @@
           pickerWrapper.classList.remove("hidden");
           pickerWrapper.classList.add("flex");
         }
-        if (desc) desc.textContent = `${adminActiveWeek}. haftaya ait çözülen soru sayıları, tamamlanan kazanımlar ve hafta sonu deneme sınavı başarı analizi gösterilmektedir.`;
+        const activeWNum = adminActiveWeek === 'ALL' ? 1 : adminActiveWeek;
+        if (desc) desc.textContent = `${activeWNum}. haftaya ait çözülen soru sayıları, tamamlanan kazanımlar ve hafta sonu deneme sınavı başarı analizi gösterilmektedir.`;
       }
-      renderAiCoachAnalysis(adminActiveWeek);
+      renderAiCoachAnalysis(adminActiveWeek === 'ALL' ? 1 : adminActiveWeek);
     }
 
     function changeAiCoachSpecificWeek(wNum) {
@@ -1539,7 +1732,7 @@
       const adminSel = document.getElementById("adminStudentSelector");
       if (adminSel) adminSel.value = name;
       renderDashboardOverview();
-      renderAiCoachAnalysis(adminActiveWeek);
+      renderAiCoachAnalysis(adminActiveWeek === 'ALL' ? 1 : adminActiveWeek);
       renderSingleQrTab();
       if (document.getElementById("adminTab-reportcard") && !document.getElementById("adminTab-reportcard").classList.contains("hidden")) {
         renderParentReportCard();
@@ -1548,7 +1741,41 @@
 
     function renderDashboardOverview() {
       const allStudents = getRegisteredStudents();
+      const isAllWeeks = adminActiveWeek === 'ALL';
       
+      // Başlık ve Rozetleri Güncelle
+      const titleEl = document.getElementById("adminOverviewTableTitle");
+      const badgeEl = document.getElementById("adminOverviewScopeBadge");
+      const subEl = document.getElementById("adminOverviewTableSub");
+      const thTopics = document.getElementById("thTopicsCol");
+      const thQuestions = document.getElementById("thQuestionsCol");
+      const thDeneme = document.getElementById("thDenemeCol");
+      const thSuccess = document.getElementById("thSuccessCol");
+
+      if (isAllWeeks) {
+        if (titleEl) titleEl.textContent = "Tüm Kayıtlı Öğrencilerin 40 Haftalık Genel Gelişim Tablosu";
+        if (badgeEl) {
+          badgeEl.textContent = "🌟 Tüm 40 Hafta (Genel Süreç)";
+          badgeEl.className = "text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold border border-indigo-200";
+        }
+        if (subEl) subEl.textContent = "Tüm 40 haftadaki toplam çözülen soru sayıları, tamamlanan müfredat kazanımları ve LGS deneme net ortalamaları";
+        if (thTopics) thTopics.textContent = "Tamamlanan Konu (Tüm Yıl / 42)";
+        if (thQuestions) thQuestions.textContent = "Toplam Soru (40 Hafta)";
+        if (thDeneme) thDeneme.textContent = "Deneme Net Ort. (90 Soru)";
+        if (thSuccess) thSuccess.textContent = "LGS 2027 Başarı Seviyesi";
+      } else {
+        if (titleEl) titleEl.textContent = `Tüm Kayıtlı Öğrencilerin ${adminActiveWeek}. Hafta Gelişim Tablosu`;
+        if (badgeEl) {
+          badgeEl.textContent = `📅 ${adminActiveWeek}. Hafta`;
+          badgeEl.className = "text-[10px] px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200";
+        }
+        if (subEl) subEl.textContent = `${adminActiveWeek}. haftada çözülen soru sayıları, tamamlanan konu kazanımları ve hafta sonu deneme sınavı netleri`;
+        if (thTopics) thTopics.textContent = `${adminActiveWeek}. Hf Konu`;
+        if (thQuestions) thQuestions.textContent = `${adminActiveWeek}. Hf Soru`;
+        if (thDeneme) thDeneme.textContent = `${adminActiveWeek}. Hf Deneme Neti`;
+        if (thSuccess) thSuccess.textContent = "Haftalık Başarı %";
+      }
+
       const branchFilter = document.getElementById("adminFilterBranch")?.value || "ALL";
       const activityFilter = document.getElementById("adminFilterActivity")?.value || "ALL";
       const searchFilter = (document.getElementById("adminFilterSearch")?.value || "").toLocaleLowerCase('tr-TR').trim();
@@ -1569,12 +1796,10 @@
           if (!stName.includes(searchFilter) && !stUser.includes(searchFilter)) return false;
         }
 
-        // Aktivite / Veri Giriş Durumu
-        const s = calculateStudentWeekSummary(st.name, adminActiveWeek);
-        const hasActivity = (s.totalQuestions > 0 || s.topicsDone > 0 || s.denemeNet > 0 || s.denemeCount > 0);
-
-        if (activityFilter === "ACTIVE" && !hasActivity) return false;
-        if (activityFilter === "INACTIVE" && hasActivity) return false;
+        // Aktivite Durumu Filtresi
+        const s = getStudentAggregatedSummary(st.name, adminActiveWeek);
+        if (activityFilter === "ACTIVE" && !s.hasActivity) return false;
+        if (activityFilter === "INACTIVE" && s.hasActivity) return false;
         if (activityFilter === "DENEME_ONLY" && s.denemeCount === 0 && s.denemeNet === 0) return false;
 
         return true;
@@ -1582,25 +1807,30 @@
 
       // 2. Filtrelenen Kohorta Göre İstatistikleri Hesapla
       let groupTotalQ = 0;
-      let groupTotalNet = 0;
+      let groupTotalNetSum = 0;
+      let groupTotalNetCount = 0;
       let groupTopicsDone = 0;
+      let groupMaxNet = 0;
       let activeStudentCount = 0;
 
       filteredStudents.forEach(st => {
-        const s = calculateStudentWeekSummary(st.name, adminActiveWeek);
+        const s = getStudentAggregatedSummary(st.name, adminActiveWeek);
         groupTotalQ += s.totalQuestions;
-        groupTotalNet += s.denemeNet;
-        groupTopicsDone += s.topicsDone;
-        if (s.totalQuestions > 0 || s.topicsDone > 0 || s.denemeNet > 0 || s.denemeCount > 0) {
-          activeStudentCount++;
+        if (s.denemeNet > 0) {
+          groupTotalNetSum += (s.denemeNet * Math.max(1, s.denemeCount));
+          groupTotalNetCount += Math.max(1, s.denemeCount);
         }
+        if (s.maxDenemeNet > groupMaxNet) groupMaxNet = s.maxDenemeNet;
+        groupTopicsDone += s.topicsDone;
+        if (s.hasActivity) activeStudentCount++;
       });
 
-      const avgNet = filteredStudents.length > 0 ? (groupTotalNet / filteredStudents.length).toFixed(1) : "0.0";
+      const avgNet = groupTotalNetCount > 0 ? (groupTotalNetSum / groupTotalNetCount).toFixed(1) : (filteredStudents.length > 0 ? (groupTotalNetSum / filteredStudents.length).toFixed(1) : "0.0");
       const avgTopics = filteredStudents.length > 0 ? (groupTopicsDone / filteredStudents.length).toFixed(1) : "0.0";
-      const avgSuccessPct = filteredStudents.length > 0 ? Math.min(100, Math.round((groupTotalNet / (filteredStudents.length * 90)) * 100)) : 0;
+      const avgSuccessPct = filteredStudents.length > 0 ? Math.min(100, Math.round((parseFloat(avgNet) / 90) * 100)) : 0;
+      const avgQPerStudent = filteredStudents.length > 0 ? Math.round(groupTotalQ / filteredStudents.length) : 0;
 
-      const activeSumm = calculateStudentWeekSummary(inspectedStudentName, adminActiveWeek);
+      const activeSumm = getStudentAggregatedSummary(inspectedStudentName, adminActiveWeek);
 
       document.getElementById("adminMetricsCards").innerHTML = `
         <div class="p-4 rounded-3xl bg-blue-50 border border-blue-200">
@@ -1609,14 +1839,14 @@
           <div class="text-[11px] text-blue-600 font-medium">Veri Giren: <strong class="text-emerald-700">${activeStudentCount}</strong> Öğrenci</div>
         </div>
         <div class="p-4 rounded-3xl bg-emerald-50 border border-emerald-200">
-          <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Grup Toplam Soru</div>
-          <div class="text-2xl font-fun font-bold text-emerald-950 mt-1">${groupTotalQ} Soru</div>
-          <div class="text-[11px] text-emerald-600 font-medium">Ortalama: ${filteredStudents.length > 0 ? Math.round(groupTotalQ / filteredStudents.length) : 0} Soru / Öğr.</div>
+          <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">${isAllWeeks ? 'Toplam Soru (40 Hafta)' : 'Grup Soru (' + adminActiveWeek + '. Hf)'}</div>
+          <div class="text-2xl font-fun font-bold text-emerald-950 mt-1">${groupTotalQ.toLocaleString('tr-TR')} Soru</div>
+          <div class="text-[11px] text-emerald-600 font-medium">Ortalama: ${avgQPerStudent.toLocaleString('tr-TR')} Soru / Öğr.</div>
         </div>
         <div class="p-4 rounded-3xl bg-purple-50 border border-purple-200">
-          <div class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Grup Deneme Ortalaması</div>
+          <div class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">${isAllWeeks ? 'Deneme Net Ortalaması' : 'Haftalık Deneme Neti'}</div>
           <div class="text-2xl font-fun font-bold text-purple-950 mt-1">${avgNet} Net</div>
-          <div class="text-[11px] text-purple-500 font-medium">90 Soru Üzerinden • Konu Ort: ${avgTopics}/42</div>
+          <div class="text-[11px] text-purple-500 font-medium">${isAllWeeks ? 'En Yüksek: ' + groupMaxNet + 'N • Konu: ' + avgTopics + '/42' : '90 Soru • Konu: ' + avgTopics + '/42'}</div>
         </div>
         <div class="p-4 rounded-3xl bg-amber-50 border border-amber-200">
           <div class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Grup Başarı Oranı</div>
@@ -1625,105 +1855,280 @@
         </div>
       `;
 
-      // 3. Tablo İçeriğini Doldur
-      const tbody = document.getElementById("adminStudentsTableBody");
-      tbody.innerHTML = "";
-
-      if (filteredStudents.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" class="p-8 text-center text-slate-500">
-              <div class="max-w-md mx-auto space-y-2">
-                <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mx-auto">
-                  <i class="fa-solid fa-filter-circle-xmark"></i>
-                </div>
-                <div class="font-fun text-sm font-bold text-slate-800">Filtreye Uygun Öğrenci Bulunamadı</div>
-                <p class="text-xs text-slate-400">Seçili şube, veri giriş durumu veya arama kelimesine uygun kayıt bulunamadı.</p>
-              </div>
-            </td>
-          </tr>
-        `;
+      // 3. Matris Görünümü veya Liste Görünümünü Doldur
+      if (adminOverviewViewMode === 'matrix') {
+        renderClassMatrixView(filteredStudents);
       } else {
-        filteredStudents.forEach(st => {
-          const summ = calculateStudentWeekSummary(st.name, adminActiveWeek);
-          const pct = Math.min(100, Math.round((summ.denemeNet / 90) * 100));
-          const isCurrent = st.name.toLocaleLowerCase('tr-TR') === inspectedStudentName.toLocaleLowerCase('tr-TR');
-          const hasEnteredData = (summ.totalQuestions > 0 || summ.topicsDone > 0 || summ.denemeNet > 0 || summ.denemeCount > 0);
+        const tbody = document.getElementById("adminStudentsTableBody");
+        if (tbody) {
+          tbody.innerHTML = "";
 
-          const tr = document.createElement("tr");
-          tr.className = `hover:bg-slate-50 transition-colors ${isCurrent ? 'bg-blue-50/50 font-bold' : ''}`;
-          tr.innerHTML = `
-            <td class="p-3">
-              <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-sm shrink-0">${st.avatar || '🌟'}</span>
-                <div>
-                  <div class="font-bold text-slate-800 flex items-center gap-1.5">
-                    <span>${st.name}</span>
-                    ${isCurrent ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">Seçili</span>' : ''}
+          if (filteredStudents.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" class="p-8 text-center text-slate-500">
+                  <div class="max-w-md mx-auto space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mx-auto">
+                      <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </div>
+                    <div class="font-fun text-sm font-bold text-slate-800">Filtreye Uygun Öğrenci Bulunamadı</div>
+                    <p class="text-xs text-slate-400">Seçili şube, veri giriş durumu veya arama kelimesine uygun kayıt bulunamadı.</p>
                   </div>
-                  <div class="flex items-center gap-1.5 mt-0.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">${st.sube || '7. Sınıf'}</span>
-                    ${hasEnteredData 
-                      ? '<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Veri Girdi ✓</span>' 
-                      : '<span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded">Veri Yok</span>'
-                    }
+                </td>
+              </tr>
+            `;
+          } else {
+            filteredStudents.forEach(st => {
+              const summ = getStudentAggregatedSummary(st.name, adminActiveWeek);
+              const pct = Math.min(100, Math.round((summ.denemeNet / 90) * 100));
+              const isCurrent = st.name.toLocaleLowerCase('tr-TR') === inspectedStudentName.toLocaleLowerCase('tr-TR');
+
+              const tr = document.createElement("tr");
+              tr.className = `hover:bg-slate-50 transition-colors ${isCurrent ? 'bg-blue-50/50 font-bold' : ''}`;
+              tr.innerHTML = `
+                <td class="p-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-sm shrink-0">${st.avatar || '🌟'}</span>
+                    <div>
+                      <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>${st.name}</span>
+                        ${isCurrent ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">Seçili</span>' : ''}
+                      </div>
+                      <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">${st.sube || '7. Sınıf'}</span>
+                        ${summ.hasActivity 
+                          ? '<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Veri Girdi ✓</span>' 
+                          : '<span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded">Veri Yok</span>'
+                        }
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </td>
-            <td class="p-3 text-center font-bold text-slate-700">${summ.topicsDone} / 42</td>
-            <td class="p-3 text-center font-bold text-emerald-700">${summ.totalQuestions} Soru</td>
-            <td class="p-3 text-center">
-              <div class="font-bold text-indigo-700">${summ.denemeNet} Net</div>
-              ${summ.denemeCount > 0 
-                ? `<span class="text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-200">${summ.denemeCount} Deneme</span>` 
-                : ''}
-            </td>
-            <td class="p-3 text-center">
-              <span class="text-xs px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-800 font-bold border border-indigo-200">%${pct}</span>
-            </td>
-            <td class="p-3 text-right">
-              <div class="flex items-center justify-end gap-1.5">
-                <button onclick="launchStudentTracking('${st.name.replace(/'/g, "\\'")}', '${st.avatar}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer" title="Öğrencinin Takip Sayfasına Git">
-                  Takip 🎯
-                </button>
-                <button onclick="openStudentParentReportCard('${st.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1" title="Veli Gelişim Karnesi (A4 / PDF)">
-                  <i class="fa-solid fa-file-invoice text-[10px]"></i>
-                  <span>Veli Karnesi 📜</span>
-                </button>
-                <button onclick="selectStudentToInspect('${st.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer" title="Karnesini İncele">
-                  İncele 📋
-                </button>
-                <button onclick="deleteStudentFromAdmin('${st.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 shadow-xs cursor-pointer" title="Öğrenciyi Sil">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+                </td>
+                <td class="p-3 text-center font-bold text-slate-700">${summ.topicsDone} / 42</td>
+                <td class="p-3 text-center font-bold text-emerald-700">${summ.totalQuestions.toLocaleString('tr-TR')} Soru</td>
+                <td class="p-3 text-center">
+                  <div class="font-bold text-indigo-700">${summ.denemeNet} Net</div>
+                  <div class="flex items-center justify-center gap-1 mt-0.5 flex-wrap">
+                    ${summ.denemeCount > 0 
+                      ? `<span class="text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-200">${summ.denemeCount} Deneme</span>` 
+                      : ''}
+                    ${isAllWeeks && summ.maxDenemeNet > 0 
+                      ? `<span class="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">En Yüksek: ${summ.maxDenemeNet}N</span>` 
+                      : ''}
+                  </div>
+                </td>
+                <td class="p-3 text-center">
+                  <span class="text-xs px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-800 font-bold border border-indigo-200">%${pct}</span>
+                </td>
+                <td class="p-3 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="launchStudentTracking('${st.name.replace(/'/g, "\\'")}', '${st.avatar}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer" title="Öğrencinin Takip Sayfasına Git">
+                      Takip 🎯
+                    </button>
+                    <button onclick="openStudentParentReportCard('${st.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1" title="Veli Gelişim Karnesi (A4 / PDF)">
+                      <i class="fa-solid fa-file-invoice text-[10px]"></i>
+                      <span>Veli Karnesi 📜</span>
+                    </button>
+                    <button onclick="openStudent40WeeksMatrix('${st.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold border border-purple-200 shadow-xs cursor-pointer" title="40 Haftalık Süreç & Karşılaştırma Matrisini Aç">
+                      40 Hafta 🗓️
+                    </button>
+                    <button onclick="selectStudentToInspect('${st.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer" title="Karnesini İncele">
+                      İncele 📋
+                    </button>
+                    <button onclick="deleteStudentFromAdmin('${st.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 shadow-xs cursor-pointer" title="Öğrenciyi Sil">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+        }
       }
 
-      // 4. Seçili Öğrencinin Deneme Geçmişi & Yansıma Notunu Render Et
+      // 4. Seçili Öğrencinin 40 Haftalık Dökümü, Deneme Geçmişi & Yansıma Notunu Render Et
       renderInspectedStudentDetails(activeSumm);
     }
 
+    // 40 Haftalık Tüm Sınıf Karşılaştırma Matrisi Tablosu Motoru
+    function renderClassMatrixView(filteredStudents) {
+      const tableEl = document.getElementById("adminClassMatrixTable");
+      if (!tableEl) return;
+
+      if (filteredStudents.length === 0) {
+        tableEl.innerHTML = `
+          <tbody>
+            <tr>
+              <td class="p-6 text-center text-slate-400">Filtreye uygun öğrenci kaydı bulunamadı.</td>
+            </tr>
+          </tbody>
+        `;
+        return;
+      }
+
+      // Header Sütunları
+      let headerThs = "";
+      for (let w = 1; w <= 40; w++) {
+        headerThs += `<th class="p-2 text-center border-l border-slate-200 min-w-[65px] font-bold text-slate-700 text-[10px] bg-slate-100/80">${w}. Hf</th>`;
+      }
+
+      let rowsHtml = "";
+      filteredStudents.forEach(st => {
+        const fullSumm = getStudentAggregatedSummary(st.name, 'ALL');
+        const pct = Math.min(100, Math.round((fullSumm.denemeNet / 90) * 100));
+        const isCurrent = st.name.toLocaleLowerCase('tr-TR') === inspectedStudentName.toLocaleLowerCase('tr-TR');
+
+        let weekCells = "";
+        (fullSumm.weeklyBreakdown || []).forEach(wItem => {
+          const hasData = wItem.totalQuestions > 0 || wItem.denemeNet > 0 || wItem.topicsDone > 0;
+          let cellContent = "—";
+          let cellBg = "bg-slate-50/40 text-slate-400";
+
+          if (hasData) {
+            cellBg = "bg-emerald-50/70 text-emerald-950 hover:bg-emerald-100 font-bold cursor-pointer transition-colors";
+            cellContent = `
+              <div class="text-[10px] leading-tight">
+                <span class="text-emerald-700 font-bold">${wItem.totalQuestions}S</span>
+                ${wItem.denemeNet > 0 ? `<div class="text-[9px] text-indigo-700 font-bold font-mono">${wItem.denemeNet}N</div>` : ''}
+              </div>
+            `;
+          }
+
+          weekCells += `
+            <td onclick="selectStudentToInspect('${st.name.replace(/'/g, "\\'")}'); changeAdminWeek(${wItem.weekNumber});" class="p-1.5 text-center border-l border-slate-200 ${cellBg}" title="${st.name} • ${wItem.weekNumber}. Hafta: ${wItem.totalQuestions} Soru, ${wItem.topicsDone} Konu, ${wItem.denemeNet} Net">
+              ${cellContent}
+            </td>
+          `;
+        });
+
+        rowsHtml += `
+          <tr class="hover:bg-indigo-50/30 transition-colors border-b border-slate-200 ${isCurrent ? 'bg-blue-50/50' : ''}">
+            <td class="p-2.5 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200 shadow-xs min-w-[170px]">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center text-xs shrink-0">${st.avatar || '🌟'}</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">${st.name}</div>
+                  <div class="text-[10px] text-indigo-600 font-semibold">${st.sube || '7. Sınıf'}</div>
+                </div>
+              </div>
+            </td>
+            ${weekCells}
+            <td class="p-2 text-center font-bold text-emerald-700 border-l border-slate-200 bg-white min-w-[90px]">${fullSumm.totalQuestions.toLocaleString('tr-TR')} Soru</td>
+            <td class="p-2 text-center font-bold text-indigo-700 border-l border-slate-200 bg-white min-w-[80px]">${fullSumm.denemeNet} N</td>
+            <td class="p-2 text-center font-bold text-slate-800 border-l border-slate-200 bg-white min-w-[70px]">%${pct}</td>
+            <td class="p-2 text-right border-l border-slate-200 bg-white min-w-[90px]">
+              <button onclick="openStudentParentReportCard('${st.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[10px] shadow-xs cursor-pointer">
+                Karne 📜
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tableEl.innerHTML = `
+        <thead>
+          <tr class="border-b border-slate-300 text-slate-700 bg-slate-100 text-[11px]">
+            <th class="p-2.5 font-bold uppercase sticky left-0 bg-slate-100 z-20 border-r border-slate-200">Öğrenci Adı</th>
+            ${headerThs}
+            <th class="p-2 text-center font-bold uppercase border-l border-slate-200 bg-slate-100">40 Hf Soru</th>
+            <th class="p-2 text-center font-bold uppercase border-l border-slate-200 bg-slate-100">Net Ort.</th>
+            <th class="p-2 text-center font-bold uppercase border-l border-slate-200 bg-slate-100">Başarı</th>
+            <th class="p-2 text-right font-bold uppercase border-l border-slate-200 bg-slate-100">Eylem</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 font-medium">
+          ${rowsHtml}
+        </tbody>
+      `;
+    }
+
+    // 40 Haftalık Süreç & Karşılaştırma Matrisi ve Deneme Geçmişi Render Motoru
     function renderInspectedStudentDetails(activeSumm) {
       const refCont = document.getElementById("adminReflectionsContainer");
       if (!refCont) return;
 
-      const history = activeSumm.denemeHistory || [];
-      let historyHtml = "";
+      const studentName = inspectedStudentName;
+      if (!studentName) {
+        refCont.innerHTML = "";
+        return;
+      }
 
+      // 40 Haftalık Kapsamlı Verileri Getir
+      const fullSummary = getStudentAggregatedSummary(studentName, 'ALL');
+      const weeksList = fullSummary.weeklyBreakdown || [];
+      const history = fullSummary.denemeHistory || [];
+
+      // 1. 40 HAFTALIK MATRİS TABLOSU SATIRLARI
+      let matrixRows = "";
+      weeksList.forEach(w => {
+        const hasData = w.totalQuestions > 0 || w.denemeNet > 0 || w.topicsDone > 0;
+        const isCurrentWeek = adminActiveWeek === w.weekNumber;
+        const weekPct = Math.min(100, Math.round((w.denemeNet / 90) * 100));
+
+        let statusBadge = `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">Veri Yok</span>`;
+        if (hasData) {
+          statusBadge = `<span class="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">Veri Girildi ✓</span>`;
+        }
+
+        matrixRows += `
+          <tr class="hover:bg-slate-50 transition-colors ${isCurrentWeek ? 'bg-blue-50/60 font-bold' : ''}">
+            <td class="p-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg ${hasData ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'} font-fun font-bold text-xs flex items-center justify-center shrink-0">
+                  ${w.weekNumber}
+                </span>
+                <div>
+                  <div class="font-bold text-slate-900">${w.weekObj.label || w.weekNumber + '. Hafta'}</div>
+                  ${isCurrentWeek ? '<span class="text-[9px] text-blue-600 font-bold">● Seçili Hafta</span>' : ''}
+                </div>
+              </div>
+            </td>
+            <td class="p-2.5 text-center">
+              <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-800 font-bold text-xs border border-blue-200">
+                ${w.topicsDone} / 42
+              </span>
+            </td>
+            <td class="p-2.5 text-center font-bold text-emerald-700 font-mono">
+              ${w.totalQuestions > 0 ? w.totalQuestions + ' Soru' : '—'}
+            </td>
+            <td class="p-2.5 text-center">
+              ${w.denemeNet > 0 
+                ? `<span class="font-bold text-indigo-700 font-mono text-xs">${w.denemeNet} Net</span> ${w.denemeCount > 1 ? '<span class="text-[9px] text-purple-600 font-semibold">(' + w.denemeCount + ' D)</span>' : ''}`
+                : '<span class="text-slate-400">—</span>'
+              }
+            </td>
+            <td class="p-2.5 text-center">
+              ${w.denemeNet > 0 
+                ? `<span class="text-xs px-2 py-0.5 rounded-lg bg-purple-50 text-purple-800 font-bold border border-purple-200">%${weekPct}</span>` 
+                : '<span class="text-slate-400">—</span>'
+              }
+            </td>
+            <td class="p-2.5 text-slate-600 max-w-xs truncate text-[11px] italic">
+              ${w.reflection ? `"${w.reflection}"` : '<span class="text-slate-300">Not girilmedi</span>'}
+            </td>
+            <td class="p-2.5 text-center">
+              ${statusBadge}
+            </td>
+            <td class="p-2.5 text-right">
+              <button onclick="changeAdminWeek(${w.weekNumber})" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-colors cursor-pointer" title="Bu haftanın detayına git">
+                🔎 İncele
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      // 2. DENEME GEÇMİŞİ KARTLARI
+      let historyCards = "";
       if (history.length > 0) {
-        let historyCards = "";
         history.slice().reverse().forEach((item, revIdx) => {
           const actualIdx = history.length - 1 - revIdx;
           let branchBadges = "";
           (item.subjects || []).forEach(s => {
             const netVal = typeof s.net === 'number' ? s.net.toFixed(2) : (s.net || '0.00');
             branchBadges += `
-              <div class="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[10px] flex items-center justify-between">
+              <div class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] flex items-center justify-between shadow-2xs">
                 <span class="font-bold text-slate-700">${s.subject.substring(0,3)}:</span>
                 <span class="font-semibold text-slate-600">${s.correct}D ${s.incorrect}Y <strong class="text-indigo-600 font-bold">${netVal}N</strong></span>
               </div>
@@ -1731,13 +2136,13 @@
           });
 
           historyCards += `
-            <div class="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-2">
+            <div class="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-2">
               <div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
                 <div class="flex items-center gap-2">
                   <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white font-fun font-bold text-xs flex items-center justify-center">#${actualIdx + 1}</span>
                   <div>
-                    <h5 class="font-fun font-bold text-xs text-slate-800">${item.title || 'Deneme Sınavı'}</h5>
-                    <span class="text-[10px] text-slate-400">${item.date || ''} • ${item.totalCorrect || 0} Doğru, ${item.totalIncorrect || 0} Yanlış, ${item.totalEmpty || 0} Boş</span>
+                    <h5 class="font-fun font-bold text-xs text-slate-900">${item.title || 'Deneme Sınavı'}</h5>
+                    <span class="text-[10px] text-slate-500">${item.weekNum ? item.weekNum + '. Hafta • ' : ''}${item.date || ''} • ${item.totalCorrect || 0} Doğru, ${item.totalIncorrect || 0} Yanlış, ${item.totalEmpty || 0} Boş</span>
                   </div>
                 </div>
                 <div class="text-right">
@@ -1752,42 +2157,95 @@
             </div>
           `;
         });
+      }
 
-        historyHtml = `
+      refCont.innerHTML = `
+        <div class="space-y-6">
+          
+          <!-- ================= 40 HAFTALIK SÜREÇ & KARŞILAŞTIRMA MATRİSİ ================= -->
+          <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+              <div>
+                <h4 class="font-fun text-base font-bold text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-calendar-days text-indigo-600"></i>
+                  <span>${inspectedStudentName} • 40 Haftalık Süreç & Karşılaştırma Matrisi (Tüm Haftalar)</span>
+                </h4>
+                <p class="text-xs text-slate-500">Öğrencinin 1. haftadan 40. haftaya kadar tüm soru, konu, deneme sınavı ve haftalık notlarının tam dökümü</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="changeAdminWeek('ALL')" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition-all cursor-pointer">
+                  🌟 Tüm Süreci Yenile
+                </button>
+                <button onclick="openStudentParentReportCard('${inspectedStudentName.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                  <i class="fa-solid fa-file-invoice"></i> Veli Karnesini Yazdır
+                </button>
+              </div>
+            </div>
+
+            <!-- Matris Tablosu -->
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 max-h-[500px] overflow-y-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="sticky top-0 bg-slate-50 z-10 shadow-2xs">
+                  <tr class="text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200 text-[10px]">
+                    <th class="p-2.5">Hafta & Tarih Aralığı</th>
+                    <th class="p-2.5 text-center">Tamamlanan Konu</th>
+                    <th class="p-2.5 text-center">Çözülen Soru</th>
+                    <th class="p-2.5 text-center">Deneme Neti</th>
+                    <th class="p-2.5 text-center">Başarı %</th>
+                    <th class="p-2.5">Haftalık Yansıma & Değerlendirme</th>
+                    <th class="p-2.5 text-center">Durum</th>
+                    <th class="p-2.5 text-right">Eylem</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${matrixRows}
+                </tbody>
+                <tfoot class="sticky bottom-0 bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300 z-10 text-xs">
+                  <tr>
+                    <td class="p-3">40 Hafta Toplam & Ortalama:</td>
+                    <td class="p-3 text-center text-blue-700">${fullSummary.topicsDone} / 42 Konu</td>
+                    <td class="p-3 text-center text-emerald-700">${fullSummary.totalQuestions.toLocaleString('tr-TR')} Soru</td>
+                    <td class="p-3 text-center text-indigo-700">${fullSummary.denemeNet} Net Ort. (${fullSummary.denemeCount} D)</td>
+                    <td class="p-3 text-center text-purple-700">%${Math.min(100, Math.round((fullSummary.denemeNet / 90) * 100))}</td>
+                    <td class="p-3 text-slate-500 font-normal">Aktif Hafta Sayısı: <strong>${fullSummary.activeWeeksCount} / 40</strong></td>
+                    <td class="p-3 text-center text-emerald-800">Tam Döküm ✓</td>
+                    <td class="p-3 text-right"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================= TÜM DENEME SINAVLARI GEÇMİŞİ ================= -->
           <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div class="flex items-center justify-between border-b pb-2">
               <h4 class="font-fun text-sm font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-list-check text-indigo-600"></i>
-                <span>${inspectedStudentName} • ${adminActiveWeek}. Hafta Kayıtlı Deneme Sınavları (${history.length})</span>
+                <span>${inspectedStudentName} • Tüm Süreç Kayıtlı Deneme Sınavları (${history.length})</span>
               </h4>
               <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
-                Ortak Havuz Kayıtları
+                Merkezi Havuz Kayıtları
               </span>
             </div>
-            <div class="space-y-2.5">
-              ${historyCards}
-            </div>
+            ${history.length > 0 ? `<div class="space-y-2.5">${historyCards}</div>` : '<div class="p-4 text-center text-slate-400 text-xs">Henüz kaydedilmiş deneme sınavı bulunmuyor.</div>'}
           </div>
-        `;
-      }
 
-      refCont.innerHTML = `
-        <div class="space-y-4">
-          ${historyHtml}
+          <!-- ================= HAFTALIK YANSIMA NOTU ================= -->
           <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-2">
             <div class="flex items-center justify-between border-b pb-2">
               <h4 class="font-fun text-sm font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-pen-nib text-indigo-600"></i>
-                <span>${adminActiveWeek}. Hafta Değerlendirme & Yansıma Notu:</span>
+                <span>${adminActiveWeek === 'ALL' ? 'Öğrencinin Son Değerlendirme & Yansıma Notu:' : adminActiveWeek + '. Hafta Değerlendirme & Yansıma Notu:'}</span>
               </h4>
               <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
                 ${inspectedStudentName}
               </span>
             </div>
             <p class="text-xs text-slate-600 italic bg-slate-50 p-4 rounded-2xl border border-slate-200 min-h-[60px] leading-relaxed">
-              ${activeSumm.reflection ? `"${activeSumm.reflection}"` : "Bu hafta için henüz bir yansıma notu yazılmamış."}
+              ${activeSumm.reflection ? `"${activeSumm.reflection}"` : (weeksList.find(w => w.reflection)?.reflection ? `"${weeksList.find(w => w.reflection).reflection}"` : "Bu öğrenci için henüz bir yansıma notu yazılmamış.")}
             </p>
           </div>
+
         </div>
       `;
     }
